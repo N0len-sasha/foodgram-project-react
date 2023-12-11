@@ -1,10 +1,17 @@
 from django.db import models
+from django.core.validators import MinValueValidator
 
-from users.models import User
+from users.models import CustomUser
+from .constants import (MIN_INGREDIENT_VALUE,
+                        INGREDIENT_VALIDATION_MESSAGE,
+                        MAX_NAME_LENGH,
+                        MAX_HEX,
+                        MAX_UNIT_LENGHT)
 
 
 class BaseModel(models.Model):
-    author = models.ForeignKey(User,
+    author = models.ForeignKey(CustomUser,
+                               null=True,
                                on_delete=models.CASCADE)
 
     class Meta:
@@ -12,30 +19,47 @@ class BaseModel(models.Model):
 
 
 class Tag(models.Model):
-    name = models.CharField(max_length=256, unique=True)
-    color_code = models.CharField(max_length=7, unique=True)
+    name = models.CharField('Название',
+                            max_length=MAX_NAME_LENGH,
+                            unique=True)
+    color_code = models.CharField('Цвет(Hex)',
+                                  max_length=MAX_HEX,
+                                  unique=True)
     slug = models.SlugField(unique=True)
 
 
 class Ingredient(models.Model):
-    name = models.CharField(max_length=256)
-    count = models.IntegerField
-    unit = models.CharField(max_length=20)
+    name = models.CharField('Название',
+                            max_length=MAX_NAME_LENGH)
+    measurement_unit = models.CharField('Мера',
+                                        max_length=MAX_UNIT_LENGHT)
 
 
 class Recipe(BaseModel):
-    name = models.CharField(max_length=256)
-    image = models.ImageField(upload_to='images/')
-    description = models.TextField()
+    name = models.CharField(max_length=MAX_NAME_LENGH)
+    image = models.ImageField(upload_to='images/', null=True)
+    text = models.TextField()
     ingredient = models.ManyToManyField(
         Ingredient,
+        through='RecipeIngredient',
         related_name='ingredients'
     )
-    tag = models.ManyToManyField(
+    tags = models.ManyToManyField(
         Tag,
         related_name='tags'
     )
-    time = models.IntegerField
+    cooking_time = models.IntegerField
+
+
+class RecipeIngredient(models.Model):
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
+    amount = models.IntegerField(
+        validators=[
+            MinValueValidator(MIN_INGREDIENT_VALUE,
+                              message=INGREDIENT_VALIDATION_MESSAGE),
+        ]
+    )
 
 
 class CheckList(BaseModel):
@@ -54,6 +78,6 @@ class Favorites(BaseModel):
 
 class Follow(BaseModel):
     follow = models.ManyToManyField(
-        User,
+        CustomUser,
         related_name='follows'
     )
