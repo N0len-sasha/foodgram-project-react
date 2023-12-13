@@ -4,6 +4,8 @@ from django.core.validators import MinValueValidator
 from users.models import CustomUser
 from .constants import (MIN_INGREDIENT_VALUE,
                         INGREDIENT_VALIDATION_MESSAGE,
+                        COOKING_VALIDATION_MESSAGE,
+                        MIN_COOKING_VALUE,
                         MAX_NAME_LENGH,
                         MAX_HEX,
                         MAX_UNIT_LENGHT)
@@ -22,9 +24,9 @@ class Tag(models.Model):
     name = models.CharField('Название',
                             max_length=MAX_NAME_LENGH,
                             unique=True)
-    color_code = models.CharField('Цвет(Hex)',
-                                  max_length=MAX_HEX,
-                                  unique=True)
+    color = models.CharField('Цвет(Hex)',
+                             max_length=MAX_HEX,
+                             unique=True)
     slug = models.SlugField(unique=True)
 
 
@@ -36,24 +38,36 @@ class Ingredient(models.Model):
 
 
 class Recipe(BaseModel):
-    name = models.CharField(max_length=MAX_NAME_LENGH)
-    image = models.ImageField(upload_to='images/', null=True)
-    text = models.TextField()
-    ingredient = models.ManyToManyField(
+    name = models.CharField('Название',
+                            max_length=MAX_NAME_LENGH)
+    image = models.ImageField('Изображение',
+                              upload_to='images/', null=True)
+    text = models.TextField('Описание')
+    ingredients = models.ManyToManyField(
         Ingredient,
         through='RecipeIngredient',
-        related_name='ingredients'
+        related_name='recipes'
     )
     tags = models.ManyToManyField(
         Tag,
-        related_name='tags'
+        related_name='recipes'
     )
-    cooking_time = models.IntegerField
+    cooking_time = models.PositiveSmallIntegerField(
+        'Время приготовления',
+        validators=[
+            MinValueValidator(MIN_COOKING_VALUE,
+                              message=COOKING_VALIDATION_MESSAGE)
+        ]
+    )
 
 
 class RecipeIngredient(models.Model):
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
-    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe,
+                               on_delete=models.CASCADE,
+                               related_name='recipeingredient')
+    ingredient = models.ForeignKey(Ingredient,
+                                   on_delete=models.CASCADE,
+                                   related_name='recipeingredient')
     amount = models.IntegerField(
         validators=[
             MinValueValidator(MIN_INGREDIENT_VALUE,
