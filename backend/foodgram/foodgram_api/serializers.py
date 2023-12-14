@@ -1,10 +1,14 @@
 import base64
-from rest_framework import serializers
+from rest_framework import serializers, status
 from django.core.files.base import ContentFile
 from djoser.serializers import UserSerializer, UserCreateSerializer
+from rest_framework.response import Response
 
-from .models import (Tag, Ingredient, Recipe, CheckList, Favorites, Follow, RecipeIngredient)
+
+from .models import (Tag, Ingredient, Recipe, CheckList,
+                     Follow, RecipeIngredient)
 from users.models import CustomUser
+
 
 '''Пользователи'''
 
@@ -119,13 +123,20 @@ class CreateIngredientSerializer(serializers.ModelSerializer):
         model = RecipeIngredient
         fields = ['id', 'amount']
 
+    def validate_amount(self, value):
+        if value <= 0:
+            raise serializers.ValidationError(
+                'Убедитесь, что это значение больше либо равно 1.'
+            )
+        return value
+
 
 class CreateRecipeSerializer(serializers.ModelSerializer):
     image = Base64ImageField(max_length=None, use_url=True)
     tags = serializers.PrimaryKeyRelatedField(many=True,
                                               queryset=Tag.objects.all())
     author = CustomUserSerializer(read_only=True)
-    ingredients = CreateIngredientSerializer(many=True)
+    ingredients = CreateIngredientSerializer(many=True, required=True)
     is_favorited = serializers.SerializerMethodField(read_only=True)
     is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
 
@@ -134,6 +145,34 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         fields = ['id', 'tags', 'author', 'ingredients',
                   'name', 'image', 'text', 'cooking_time',
                   'is_favorited', 'is_in_shopping_cart']
+
+    def validate_tags(self, value):
+        if not value:
+            raise serializers.ValidationError(
+                "Список тегов не может быть пустым."
+            )
+        if len(value) != len(set(value)):
+            raise serializers.ValidationError("Теги должны быть уникальными.")
+        return value
+
+    def validate_ingredients(self, value):
+        if not value:
+            raise serializers.ValidationError(
+                    "Список ингредиентов не может быть пустым."
+                )
+        ingredient_ids = set()
+        for el in value:
+            if not el:
+                raise serializers.ValidationError(
+                    "Ингредиент не может быть пустым."
+                )
+            ingredient_id = el['id']
+            if ingredient_id in ingredient_ids:
+                raise serializers.ValidationError(
+                    "Дубликаты ингредиентов не разрешены."
+                )
+            ingredient_ids.add(ingredient_id)
+        return value
 
     def get_is_favorited(self, obj):
         user = self.context['request'].user
@@ -163,6 +202,37 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
 
         return recipe
 
+    def update(self, instance, validated_data):
+        instance.name = validated_data.get('name', instance.name)
+        instance.text = validated_data.get('text', instance.text)
+        instance.cooking_time = validated_data.get('cooking_time',
+                                                   instance.cooking_time)
+        tags_data = validated_data.get('tags')
+
+        instance.image = validated_data.get('image', instance.image)
+
+        ingredients_data = validated_data.get('ingredients')
+
+        if not tags_data or not ingredients_data:
+            raise serializers.ValidationError(
+                    "Список тегов или ингредиентов не может быть пустым."
+                )
+
+        if tags_data:
+            instance.tags.set(tags_data)
+
+        if ingredients_data:
+            instance.ingredients.clear()
+            for ingredient_data in ingredients_data:
+                ingredient = ingredient_data['id']
+                amount = ingredient_data['amount']
+                RecipeIngredient.objects.create(recipe=instance,
+                                                ingredient=ingredient,
+                                                amount=amount)
+        instance.save()
+
+        return instance
+
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         tags_data = TagSerializer(Tag.objects.filter(
@@ -188,12 +258,11 @@ class CheckListSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class FavoritesSerializer(serializers.ModelSerializer):
-    recipe = serializers.PrimaryKeyRelatedField(read_only=True)
+class FavoritesReturnSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = Favorites
-        fields = '__all__'
+        model = Recipe
+        fields = ['id', 'name', 'image', 'cooking_time']
 
 
 class FollowSerializer(serializers.ModelSerializer):

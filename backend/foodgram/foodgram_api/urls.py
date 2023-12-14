@@ -6,7 +6,7 @@ from .views import (
     IngredientViewSet,
     RecipeViewSet,
     CustomUserViewSet,
-    FavoritesViewSet
+    FavoritesViewSet,
 )
 
 s_router_v1 = SimpleRouter()
@@ -24,7 +24,7 @@ s_router_v1.register(r'users',
                      basename='users')
 s_router_v1.register(r'recipes/(?P<recipe_id>\d+)/favorite',
                      FavoritesViewSet,
-                     basename='favorites')
+                     basename='favorites'),
 
 urlpatterns = [
     path('', include(s_router_v1.urls)),

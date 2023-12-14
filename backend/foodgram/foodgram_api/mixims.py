@@ -23,9 +23,3 @@ class StandartObjectMixim(mixins.CreateModelMixin,
                           mixins.DestroyModelMixin,
                           viewsets.GenericViewSet):
     pass
-
-
-class DeleteAndPostMixim(mixins.CreateModelMixin,
-                         mixins.DestroyModelMixin,
-                         viewsets.GenericViewSet):
-    pass

@@ -37,9 +37,6 @@ class CustomUser(AbstractUser):
     last_name = models.CharField(
         'Фамилия',
         max_length=MAX_USER_CHARACTERS)
-    password = models.CharField(
-        'Пароль',
-        max_length=MAX_USER_CHARACTERS)
     is_subscribed = models.BooleanField(default=False)
     role = models.CharField(
         max_length=max(len(choice[0]) for choice in ROLE_CHOICES),

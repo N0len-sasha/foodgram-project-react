@@ -60,6 +60,9 @@ class Recipe(BaseModel):
         ]
     )
 
+    class Meta:
+        ordering = ['name']
+
 
 class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(Recipe,
