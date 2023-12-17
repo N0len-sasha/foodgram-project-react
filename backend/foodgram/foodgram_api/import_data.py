@@ -5,7 +5,6 @@ from .models import Ingredient
 
 
 def import_ingredients_from_csv():
-    # Ingredient.objects.all().delete()
     with open('C:/Dev/foodgram-project-react/data/ingredients.csv',
               'r',
               encoding='utf-8') as csv_file:
@@ -21,7 +20,6 @@ def import_ingredients_from_csv():
 
 
 def import_ingredients_from_json():
-    # Ingredient.objects.all().delete()
     with open('C:/Dev/foodgram-project-react/data/ingredients.json',
               'rb') as f:
         data = json.load(f)

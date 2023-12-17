@@ -29,12 +29,25 @@ class Tag(models.Model):
                              unique=True)
     slug = models.SlugField(unique=True)
 
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'Тег'
+        verbose_name_plural = 'Теги'
 
 class Ingredient(models.Model):
     name = models.CharField('Название',
                             max_length=MAX_NAME_LENGH)
     measurement_unit = models.CharField('Мера',
                                         max_length=MAX_UNIT_LENGHT)
+    
+    def __str__(self):
+        return self.name
+    
+    class Meta:
+        verbose_name = 'Ингредиент'
+        verbose_name_plural = 'Ингредиенты'
 
 
 class Recipe(BaseModel):
@@ -50,6 +63,7 @@ class Recipe(BaseModel):
     )
     tags = models.ManyToManyField(
         Tag,
+        through='RecipeTag',
         related_name='recipes'
     )
     cooking_time = models.PositiveSmallIntegerField(
@@ -60,7 +74,12 @@ class Recipe(BaseModel):
         ]
     )
 
+    def __str__(self):
+        return self.name
+
     class Meta:
+        verbose_name = 'Рецепты'
+        verbose_name_plural = 'Рецепты'
         ordering = ['name']
 
 
@@ -78,23 +97,69 @@ class RecipeIngredient(models.Model):
         ]
     )
 
+class RecipeTag(models.Model):
+    recipe = models.ForeignKey(Recipe,
+                               on_delete=models.CASCADE,
+                               related_name='recipetag')
+    tag = models.ForeignKey(Tag,
+                                   on_delete=models.CASCADE,
+                                   related_name='recipetag')
 
 class CheckList(BaseModel):
     recipe = models.ManyToManyField(
         Recipe,
+        through='CheckListRecipe',
         related_name='checklist_recipes'
     )
+
+    class Meta:
+        verbose_name = 'Чеклист'
+        verbose_name_plural = 'Чеклисты'
+
+class CheckListRecipe(models.Model):
+    checklist = models.ForeignKey(CheckList,
+                                  on_delete=models.CASCADE,
+                                  related_name='checklistrecipe')
+    recipe = models.ForeignKey(Recipe,
+                               on_delete=models.CASCADE,
+                               related_name='checklistrecipe')
 
 
 class Favorites(BaseModel):
     recipe = models.ManyToManyField(
         Recipe,
+        through='FavoritesRecipe',
         related_name='favorites_recipes'
     )
+
+    class Meta:
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранное'
+
+class FavoritesRecipe(models.Model):
+    favorites = models.ForeignKey(Favorites,
+                                  on_delete=models.CASCADE,
+                                  related_name='favoritesrecipe')
+    recipe = models.ForeignKey(Recipe,
+                               on_delete=models.CASCADE,
+                               related_name='favoritesrecipe')
 
 
 class Follow(BaseModel):
     user_follow = models.ManyToManyField(
         CustomUser,
+        through='FollowUser',
         related_name='follows'
     )
+
+    class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+
+class FollowUser(models.Model):
+    follow = models.ForeignKey(Follow,
+                               on_delete=models.CASCADE,
+                               related_name='followuser')
+    user_follow = models.ForeignKey(CustomUser,
+                                    on_delete=models.CASCADE,
+                                    related_name='followuser')
