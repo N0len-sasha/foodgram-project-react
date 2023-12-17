@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
-from django.http import HttpResponse
 from djoser.views import UserViewSet
+from collections import defaultdict
 from rest_framework.viewsets import ViewSet
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import LimitOffsetPagination
@@ -255,10 +255,26 @@ class SubscriptionsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         return CustomUser.objects.filter(id__in=user_ids)
 
 
-class DownloadShoppingCartView(views.View):
+class DownloadShoppingCartView(views.APIView):
     def get(self, request, *args, **kwargs):
+        user = self.request.user
+        checklist = CheckList.objects.get(author=user)
+        recipes = checklist.recipe.all()
+
+        ingredient_totals = defaultdict(int)
+
+        for recipe in recipes:
+            for recipe_ingredient in recipe.recipeingredient.all():
+                ingredient = recipe_ingredient.ingredient
+                amount = recipe_ingredient.amount
+
+                ingredient_totals[ingredient] += amount
+
         content = b""
-        response = HttpResponse(content, content_type='text/plain')
+        for ingredient, total_amount in ingredient_totals.items():
+            content += f"{ingredient.name}: {total_amount} {ingredient.measurement_unit}\n".encode("utf-8")
+
+        response = Response(content, content_type='text/plain', status=status.HTTP_200_OK)
         response['Content-Disposition'] = ('attachment;'
                                            'filename="Ingredients.txt"')
 
