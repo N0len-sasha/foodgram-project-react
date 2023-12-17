@@ -73,6 +73,7 @@ class Recipe(BaseModel):
                               message=COOKING_VALIDATION_MESSAGE)
         ]
     )
+    pub_date = models.DateTimeField('Дата публикации', auto_now_add=True)
 
     def __str__(self):
         return self.name
@@ -80,7 +81,7 @@ class Recipe(BaseModel):
     class Meta:
         verbose_name = 'Рецепты'
         verbose_name_plural = 'Рецепты'
-        ordering = ['name']
+        ordering = ['pub_date']
 
 
 class RecipeIngredient(models.Model):
