@@ -54,7 +54,8 @@ class RecipeViewSet(StandartObjectMixim):
         )
         is_favorited = self.request.query_params.get('is_favorited')
         if self.request.user.is_authenticated:
-            if is_in_shopping_cart is not None and int(is_in_shopping_cart) == 1:
+            if is_in_shopping_cart is not None and int(
+               is_in_shopping_cart) == 1:
                 try:
                     checklist = CheckList.objects.get(author=self.request.user)
                     return checklist.recipe
