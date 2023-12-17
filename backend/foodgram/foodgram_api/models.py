@@ -94,7 +94,7 @@ class Favorites(BaseModel):
 
 
 class Follow(BaseModel):
-    follow = models.ManyToManyField(
+    user_follow = models.ManyToManyField(
         CustomUser,
         related_name='follows'
     )

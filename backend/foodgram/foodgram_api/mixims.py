@@ -1,6 +1,4 @@
-from rest_framework import mixins, viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
+from rest_framework import mixins, viewsets
 
 from users.validators import validator_username
 

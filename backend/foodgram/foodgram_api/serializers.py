@@ -1,12 +1,11 @@
 import base64
-from rest_framework import serializers, status
+from rest_framework import serializers
 from django.core.files.base import ContentFile
 from djoser.serializers import UserSerializer, UserCreateSerializer
-from rest_framework.response import Response
 
 
-from .models import (Tag, Ingredient, Recipe, CheckList,
-                     Follow, RecipeIngredient)
+from .models import (Follow, Tag, Ingredient,
+                     Recipe, CheckList, RecipeIngredient)
 from users.models import CustomUser
 
 
@@ -22,9 +21,17 @@ class CustomUserCreateSerializer(UserCreateSerializer):
 
 
 class CustomUserSerializer(UserSerializer):
+    is_subscribed = serializers.SerializerMethodField()
+
     class Meta(UserSerializer.Meta):
         fields = ('email', 'id', 'username',
                   'first_name', 'last_name', 'is_subscribed')
+
+    def get_is_subscribed(self, obj):
+        user = self.context['request'].user
+        if user.is_authenticated:
+            return Follow.objects.filter(author=user, user_follow=obj).exists()
+        return False
 
 
 '''Словари'''
@@ -258,15 +265,31 @@ class CheckListSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class FavoritesReturnSerializer(serializers.ModelSerializer):
+class RecipeReturnSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
         fields = ['id', 'name', 'image', 'cooking_time']
 
 
-class FollowSerializer(serializers.ModelSerializer):
+class FollowReturnSerializer(serializers.ModelSerializer):
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
 
     class Meta:
-        model = Follow
-        fields = '__all__'
+        model = CustomUser
+        fields = ['email', 'id', 'username', 'first_name', 'last_name',
+                  'is_subscribed', 'recipes', 'recipes_count', ]
+
+    def get_recipes(self, obj):
+        recipes_limit = self.context['request'].query_params.get(
+            'recipes_limit'
+        )
+        recipes = Recipe.objects.filter(author=obj)
+        if recipes_limit is not None:
+            recipes_queryset = recipes[:int(recipes_limit)]
+            return RecipeReturnSerializer(recipes_queryset, many=True).data
+        return RecipeReturnSerializer(recipes, many=True).data
+
+    def get_recipes_count(self, obj):
+        return Recipe.objects.filter(author=obj).count()

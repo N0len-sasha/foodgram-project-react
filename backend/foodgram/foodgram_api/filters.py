@@ -1,6 +1,7 @@
 from rest_framework.filters import SearchFilter
 from django_filters import rest_framework as filters
 
+
 from .models import Recipe
 
 
@@ -10,9 +11,7 @@ class CustomSearchFilter(SearchFilter):
 
 
 class RecipeFilter(filters.FilterSet):
-    tags = filters.CharFilter(field_name='tags__slug',
-                              lookup_expr='icontains',
-                              label='Tags')
+    tags = filters.AllValuesMultipleFilter(field_name='tags__slug')
 
     class Meta:
         model = Recipe
