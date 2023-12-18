@@ -36,15 +36,16 @@ class Tag(models.Model):
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
 
+
 class Ingredient(models.Model):
     name = models.CharField('Название',
                             max_length=MAX_NAME_LENGH)
     measurement_unit = models.CharField('Мера',
                                         max_length=MAX_UNIT_LENGHT)
-    
+
     def __str__(self):
         return self.name
-    
+
     class Meta:
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
@@ -98,13 +99,15 @@ class RecipeIngredient(models.Model):
         ]
     )
 
+
 class RecipeTag(models.Model):
     recipe = models.ForeignKey(Recipe,
                                on_delete=models.CASCADE,
                                related_name='recipetag')
     tag = models.ForeignKey(Tag,
-                                   on_delete=models.CASCADE,
-                                   related_name='recipetag')
+                            on_delete=models.CASCADE,
+                            related_name='recipetag')
+
 
 class CheckList(BaseModel):
     recipe = models.ManyToManyField(
@@ -116,6 +119,7 @@ class CheckList(BaseModel):
     class Meta:
         verbose_name = 'Чеклист'
         verbose_name_plural = 'Чеклисты'
+
 
 class CheckListRecipe(models.Model):
     checklist = models.ForeignKey(CheckList,
@@ -137,6 +141,7 @@ class Favorites(BaseModel):
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранное'
 
+
 class FavoritesRecipe(models.Model):
     favorites = models.ForeignKey(Favorites,
                                   on_delete=models.CASCADE,
@@ -156,6 +161,7 @@ class Follow(BaseModel):
     class Meta:
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
+
 
 class FollowUser(models.Model):
     follow = models.ForeignKey(Follow,
