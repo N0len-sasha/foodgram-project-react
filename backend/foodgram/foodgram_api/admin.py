@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.db import models 
+from django.db import models
 
 from .models import (Tag, RecipeIngredient, Ingredient,
                      CheckListRecipe, FavoritesRecipe, FollowUser,
@@ -50,7 +50,9 @@ class Recipe(admin.ModelAdmin):
     ]
 
     def get_queryset(self, request):
-        return super().get_queryset(request).annotate(favorites_count=models.Count('favoritesrecipe'))
+        return super().get_queryset(request).annotate(
+            favorites_count=models.Count('favoritesrecipe')
+        )
 
     def favorites_count(self, obj):
         return obj.favorites_count

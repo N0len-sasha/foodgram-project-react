@@ -270,11 +270,14 @@ class DownloadShoppingCartView(views.APIView):
 
                 ingredient_totals[ingredient] += amount
 
-        content = b""
+        content = b''
         for ingredient, total_amount in ingredient_totals.items():
-            content += f"{ingredient.name}: {total_amount} {ingredient.measurement_unit}\n".encode("utf-8")
+            content += f'{ingredient.name}: {total_amount}'
+            '{ingredient.measurement_unit}\n'.encode("utf-8")
 
-        response = Response(content, content_type='text/plain', status=status.HTTP_200_OK)
+        response = Response(content,
+                            content_type='text/plain',
+                            status=status.HTTP_200_OK)
         response['Content-Disposition'] = ('attachment;'
                                            'filename="Ingredients.txt"')
 
