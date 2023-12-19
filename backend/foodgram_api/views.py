@@ -1,5 +1,7 @@
+import csv
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
+from django.http import HttpResponse
 from collections import defaultdict
 from rest_framework.viewsets import ViewSet
 from rest_framework.permissions import IsAuthenticated
@@ -256,30 +258,36 @@ class SubscriptionsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
 
 
 class DownloadShoppingCartView(views.APIView):
-    def get(self, request, *args, **kwargs):
-        # user = self.request.user
-        # checklist = CheckList.objects.get(author=user)
-        # recipes = checklist.recipe.all()
+    permission_classes = [IsAuthenticated]
 
-        # ingredient_totals = defaultdict(int)
+    def get(self, request, format=None):
+        user = self.request.user
+        checklist = CheckList.objects.get(author=user)
+        recipes = checklist.recipe.all()
 
-        # for recipe in recipes:
-        #     for recipe_ingredient in recipe.recipeingredient.all():
-        #         ingredient = recipe_ingredient.ingredient
-        #         amount = recipe_ingredient.amount
+        ingredient_totals = defaultdict(int)
 
-        #         ingredient_totals[ingredient] += amount
+        for recipe in recipes:
+            for recipe_ingredient in recipe.recipeingredient.all():
+                ingredient = recipe_ingredient.ingredient
+                amount = recipe_ingredient.amount
 
-        content = b''
-        # for ingredient, total_amount in ingredient_totals.items():
-        #     content += f'{ingredient.name}: {total_amount}'
-        #     '{ingredient.measurement_unit}\n'.encode("utf-8")
+                ingredient_totals[ingredient] += amount
 
-        response = Response(content,
-                            content_type='text/plain',
-                            status=status.HTTP_200_OK)
+        response = HttpResponse(content_type="text/csv")
         response['Content-Disposition'] = ('attachment;'
-                                           'filename="Ingredients.txt"')
+                                           'filename="Ingredients.csv"')
+        writer = csv.DictWriter(response, fieldnames=['Ингредиент',
+                                                      'Количество',
+                                                      'Мера'])
+        writer.writeheader()
+
+        for ingredient, total_amount in ingredient_totals.items():
+            writer.writerow({
+                'Ингредиент': ingredient.name,
+                'Количество': total_amount,
+                'Мера': ingredient.measurement_unit
+            })
 
         return response
 
@@ -306,6 +314,8 @@ class CustomUserViewSet(UserViewSet):
     def get_permissions(self):
         if self.action == 'me':
             permission_classes = [IsAuthenticated]
+        elif self.action == 'retrive':
+            permission_classes = [AllowAny]
         else:
             permission_classes = [AllowAny]
         return [permission() for permission in permission_classes]
