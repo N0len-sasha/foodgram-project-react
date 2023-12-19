@@ -257,23 +257,23 @@ class SubscriptionsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
 
 class DownloadShoppingCartView(views.APIView):
     def get(self, request, *args, **kwargs):
-        user = self.request.user
-        checklist = CheckList.objects.get(author=user)
-        recipes = checklist.recipe.all()
+        # user = self.request.user
+        # checklist = CheckList.objects.get(author=user)
+        # recipes = checklist.recipe.all()
 
-        ingredient_totals = defaultdict(int)
+        # ingredient_totals = defaultdict(int)
 
-        for recipe in recipes:
-            for recipe_ingredient in recipe.recipeingredient.all():
-                ingredient = recipe_ingredient.ingredient
-                amount = recipe_ingredient.amount
+        # for recipe in recipes:
+        #     for recipe_ingredient in recipe.recipeingredient.all():
+        #         ingredient = recipe_ingredient.ingredient
+        #         amount = recipe_ingredient.amount
 
-                ingredient_totals[ingredient] += amount
+        #         ingredient_totals[ingredient] += amount
 
         content = b''
-        for ingredient, total_amount in ingredient_totals.items():
-            content += f'{ingredient.name}: {total_amount}'
-            '{ingredient.measurement_unit}\n'.encode("utf-8")
+        # for ingredient, total_amount in ingredient_totals.items():
+        #     content += f'{ingredient.name}: {total_amount}'
+        #     '{ingredient.measurement_unit}\n'.encode("utf-8")
 
         response = Response(content,
                             content_type='text/plain',

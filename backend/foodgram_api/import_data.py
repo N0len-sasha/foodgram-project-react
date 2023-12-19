@@ -5,7 +5,7 @@ from .models import Ingredient
 
 
 def import_ingredients_from_csv():
-    with open('C:/Dev/foodgram-project-react/data/ingredients.csv',
+    with open('data/ingredients.csv',
               'r',
               encoding='utf-8') as csv_file:
         csv_reader = csv.reader(csv_file)
