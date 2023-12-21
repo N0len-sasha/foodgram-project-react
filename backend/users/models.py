@@ -8,11 +8,9 @@ from foodgram_api.constants import (USER,
                                     MAX_EMAIL_CHARACTERS)
 from .validators import validator_username
 
-ROLE_CHOICES = [
-        (USER, 'Гость'),
-        (AUTH_USER, 'Авторизованный пользователь'),
-        (ADMIN, 'Администратор'),
-    ]
+ROLE_CHOICES = [(USER, 'Гость'),
+                (AUTH_USER, 'Авторизованный пользователь'),
+                (ADMIN, 'Администратор')]
 
 
 class CustomUser(AbstractUser):

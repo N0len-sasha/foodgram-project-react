@@ -166,27 +166,27 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
     def validate_tags(self, value):
         if not value:
             raise serializers.ValidationError(
-                "Список тегов не может быть пустым."
+                'Список тегов не может быть пустым.'
             )
         if len(value) != len(set(value)):
-            raise serializers.ValidationError("Теги должны быть уникальными.")
+            raise serializers.ValidationError('Теги должны быть уникальными.')
         return value
 
     def validate_ingredients(self, value):
         if not value:
             raise serializers.ValidationError(
-                    "Список ингредиентов не может быть пустым."
-                )
+                'Список ингредиентов не может быть пустым.'
+            )
         ingredient_ids = set()
         for el in value:
             if not el:
                 raise serializers.ValidationError(
-                    "Ингредиент не может быть пустым."
+                    'Ингредиент не может быть пустым.'
                 )
             ingredient_id = el['id']
             if ingredient_id in ingredient_ids:
                 raise serializers.ValidationError(
-                    "Дубликаты ингредиентов не разрешены."
+                    'Дубликаты ингредиентов не разрешены.'
                 )
             ingredient_ids.add(ingredient_id)
         return value
@@ -232,8 +232,8 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
 
         if not tags_data or not ingredients_data:
             raise serializers.ValidationError(
-                    "Список тегов или ингредиентов не может быть пустым."
-                )
+                'Список тегов или ингредиентов не может быть пустым.'
+            )
 
         if tags_data:
             instance.tags.set(tags_data)
