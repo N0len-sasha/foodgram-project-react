@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from collections import defaultdict
 from rest_framework.viewsets import ViewSet
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.pagination import LimitOffsetPagination, PageNumberPagination
+from rest_framework.pagination import LimitOffsetPagination
 from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework.permissions import AllowAny
