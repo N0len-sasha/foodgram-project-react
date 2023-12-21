@@ -37,8 +37,8 @@ class IngredientViewSet(GetObjectMixim):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     pagination_class = None
-    filter_backends = [CustomSearchFilter,]
-    search_fields = ['^name',]
+    filter_backends = [CustomSearchFilter, ]
+    search_fields = ['^name', ]
 
 
 class RecipeViewSet(StandartObjectMixim):
