@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from collections import defaultdict
 from rest_framework.viewsets import ViewSet
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.pagination import LimitOffsetPagination, PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework.permissions import AllowAny
@@ -22,6 +22,7 @@ from .serializers import (TagSerializer,
                           FollowReturnSerializer,
                           CustomUserSerializer,
                           CreateRecipeSerializer,)
+from .pagination import CustomPageNumberPagination
 from .mixims import GetObjectMixim, StandartObjectMixim
 from .permissions import IsAuthor
 from .filters import CustomSearchFilter, RecipeFilter
@@ -43,7 +44,7 @@ class IngredientViewSet(GetObjectMixim):
 
 class RecipeViewSet(StandartObjectMixim):
     queryset = Recipe.objects.all()
-    pagination_class = LimitOffsetPagination
+    pagination_class = CustomPageNumberPagination
     permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend]
     filterset_class = RecipeFilter

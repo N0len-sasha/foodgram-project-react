@@ -49,6 +49,16 @@ class Base64ImageField(serializers.ImageField):
         return super().to_internal_value(data)
 
 
+class RelativeMediaURLField(serializers.ImageField):
+    def to_representation(self, value):
+        if not value:
+            return None
+
+        relative_path = super().to_representation(value)
+
+        return f'/media/{relative_path}'
+
+
 class TagSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -82,7 +92,7 @@ class GetIngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeSerializer(serializers.ModelSerializer):
-    image = Base64ImageField(max_length=None, use_url=True)
+    image = RelativeMediaURLField(max_length=None, use_url=False)
     tags = serializers.PrimaryKeyRelatedField(many=True,
                                               queryset=Tag.objects.all())
     author = CustomUserSerializer(read_only=True)
@@ -139,7 +149,7 @@ class CreateIngredientSerializer(serializers.ModelSerializer):
 
 
 class CreateRecipeSerializer(serializers.ModelSerializer):
-    image = Base64ImageField(max_length=None, use_url=True)
+    image = Base64ImageField(max_length=None, use_url=False)
     tags = serializers.PrimaryKeyRelatedField(many=True,
                                               queryset=Tag.objects.all())
     author = CustomUserSerializer(read_only=True)

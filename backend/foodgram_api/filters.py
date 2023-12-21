@@ -6,8 +6,11 @@ from .models import Recipe
 
 
 class CustomSearchFilter(SearchFilter):
-    def get_search_terms(self, request):
-        return request.query_params.get('name', '')
+    def filter_queryset(self, request, queryset, view):
+        name = request.query_params.get('name', '')
+        if name:
+            queryset = queryset.filter(name__startswith=name)
+        return queryset
 
 
 class RecipeFilter(filters.FilterSet):
