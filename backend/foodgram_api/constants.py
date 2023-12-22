@@ -7,6 +7,6 @@ MIN_INGREDIENT_VALUE = 1
 MIN_COOKING_VALUE = 1
 MAX_NAME_LENGH = 200
 MAX_HEX = 7
-MAX_UNIT_LENGHT = 15
+MAX_UNIT_LENGHT = 200
 INGREDIENT_VALIDATION_MESSAGE = 'Ингредиентов должно быть 1 или более'
 COOKING_VALIDATION_MESSAGE = 'Время приготовления должно быть не менее 1 часа'
