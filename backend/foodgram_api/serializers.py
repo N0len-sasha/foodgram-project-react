@@ -1,8 +1,7 @@
 import base64
 from rest_framework import serializers
 from django.core.files.base import ContentFile
-from djoser.serializers import UserSerializer, UserCreateSerializer
-
+from djoser.serializers import UserSerializer
 
 from .models import (Follow, Tag, Ingredient,
                      Recipe, CheckList, RecipeIngredient)
@@ -10,14 +9,6 @@ from users.models import CustomUser
 
 
 '''Пользователи'''
-
-
-class CustomUserCreateSerializer(UserCreateSerializer):
-
-    class Meta(UserCreateSerializer.Meta):
-        model = CustomUser
-        fields = ('email', 'id', 'username', 'password',
-                  'first_name', 'last_name')
 
 
 class CustomUserSerializer(UserSerializer):
