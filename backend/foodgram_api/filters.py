@@ -8,9 +8,7 @@ from .models import Recipe
 class CustomSearchFilter(SearchFilter):
     def filter_queryset(self, request, queryset, view):
         name = request.query_params.get('name', '')
-        if name:
-            queryset = queryset.filter(name__startswith=name)
-        return queryset
+        return queryset.filter(name__startswith=name) if name else queryset
 
 
 class RecipeFilter(filters.FilterSet):
