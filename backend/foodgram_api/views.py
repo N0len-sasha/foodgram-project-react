@@ -12,8 +12,8 @@ from rest_framework.response import Response
 from rest_framework import status, mixins, viewsets, views
 
 
-from .models import (Tag, Ingredient, Recipe, CheckList, Favorites, Follow)
-from users.models import CustomUser
+from .models import (Tag, Ingredient, Recipe, CheckList, Favorites)
+from users.models import FoodgramUser, Follow
 from .serializers import (TagSerializer,
                           IngredientSerializer,
                           RecipeSerializer,
@@ -194,8 +194,8 @@ class FollowViewSet(ViewSet):
         user_id = kwargs.get('user_id')
 
         try:
-            follow_user = CustomUser.objects.get(id=user_id)
-        except CustomUser.DoesNotExist:
+            follow_user = FoodgramUser.objects.get(id=user_id)
+        except FoodgramUser.DoesNotExist:
             return Response({'detail': 'Пользователь не найден'},
                             status=status.HTTP_404_NOT_FOUND)
 
@@ -227,8 +227,8 @@ class FollowViewSet(ViewSet):
                             status=status.HTTP_401_UNAUTHORIZED)
 
         try:
-            follow_user = CustomUser.objects.get(id=user_id)
-        except CustomUser.DoesNotExist:
+            follow_user = FoodgramUser.objects.get(id=user_id)
+        except FoodgramUser.DoesNotExist:
             return Response({'detail': 'Пользователь не существует'},
                             status=status.HTTP_404_NOT_FOUND)
         try:
@@ -246,7 +246,7 @@ class FollowViewSet(ViewSet):
 
 
 class SubscriptionsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
-    queryset = CustomUser.objects.all()
+    queryset = FoodgramUser.objects.all()
     serializer_class = FollowReturnSerializer
     pagination_class = LimitOffsetPagination
     permission_classes = [AllowAny]
@@ -254,7 +254,7 @@ class SubscriptionsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     def get_queryset(self):
         follows = Follow.objects.get(author=self.request.user.id)
         user_ids = follows.user_follow.values_list('id', flat=True)
-        return CustomUser.objects.filter(id__in=user_ids)
+        return FoodgramUser.objects.filter(id__in=user_ids)
 
 
 class DownloadShoppingCartView(views.APIView):
@@ -296,7 +296,7 @@ class DownloadShoppingCartView(views.APIView):
 
 
 class CustomUserViewSet(UserViewSet):
-    queryset = CustomUser.objects.all()
+    queryset = FoodgramUser.objects.all()
     serializer_class = CustomUserSerializer
     pagination_class = LimitOffsetPagination
     permission_classes = [AllowAny]

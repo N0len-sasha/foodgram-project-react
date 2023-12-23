@@ -2,8 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.db.models import Count
 
-from foodgram_api.models import Follow, Recipe
-from .models import CustomUser
+from .models import FoodgramUser, Follow
 
 
 @admin.register(Follow)
@@ -17,10 +16,10 @@ class Follow(admin.ModelAdmin):
     display_follow.short_description = 'Подписки'
 
 
-@admin.register(CustomUser)
+@admin.register(FoodgramUser)
 class CustomUser(BaseUserAdmin):
     list_display = ('username', 'email', 'first_name',
-                    'last_name', 'role', 'get_followers', 'get_recipes')
+                    'last_name', 'get_followers', 'get_recipes')
 
     list_filter = ['email', 'username']
 

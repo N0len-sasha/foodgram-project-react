@@ -3,9 +3,9 @@ from rest_framework import serializers
 from django.core.files.base import ContentFile
 from djoser.serializers import UserSerializer
 
-from .models import (Follow, Tag, Ingredient,
+from .models import (Tag, Ingredient,
                      Recipe, CheckList, RecipeIngredient)
-from users.models import CustomUser
+from users.models import FoodgramUser, Follow
 
 
 '''Пользователи'''
@@ -278,7 +278,7 @@ class FollowReturnSerializer(serializers.ModelSerializer):
     recipes_count = serializers.SerializerMethodField()
 
     class Meta:
-        model = CustomUser
+        model = FoodgramUser
         fields = ['email', 'id', 'username', 'first_name', 'last_name',
                   'is_subscribed', 'recipes', 'recipes_count', ]
 

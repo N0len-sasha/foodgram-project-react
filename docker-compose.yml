@@ -29,7 +29,7 @@ services:
     image: n0len/foodgram_gateway
     env_file: .env
     ports:
-      - 8000:80
+      - 7000:80
     depends_on:
       - backend
       - frontend
