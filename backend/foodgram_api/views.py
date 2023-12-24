@@ -19,7 +19,7 @@ from .serializers import (TagSerializer,
                           RecipeSerializer,
                           RecipeReturnSerializer,
                           FollowReturnSerializer,
-                          CustomUserSerializer,
+                          UserSerializer,
                           CreateRecipeSerializer,)
 from .pagination import CustomPageNumberPagination
 from .mixims import GetObjectMixim, StandartObjectMixim
@@ -72,9 +72,6 @@ class RecipeViewSet(StandartObjectMixim):
                     return Recipe.objects.none()
 
         return queryset
-
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
 
     def get_serializer_class(self):
         if self.request.method in ['POST', 'PATCH']:
@@ -297,7 +294,7 @@ class DownloadShoppingCartView(views.APIView):
 
 class CustomUserViewSet(UserViewSet):
     queryset = FoodgramUser.objects.all()
-    serializer_class = CustomUserSerializer
+    serializer_class = UserSerializer
     pagination_class = LimitOffsetPagination
     permission_classes = [AllowAny]
 
@@ -308,7 +305,7 @@ class CustomUserViewSet(UserViewSet):
 
     def get_serializer_class(self):
         if self.action == 'me':
-            return CustomUserSerializer
+            return UserSerializer
         return super().get_serializer_class()
 
     def get_permissions(self):

@@ -16,7 +16,9 @@ django-templated-mail==1.1.1
 djangorestframework==3.12.4
 djangorestframework-simplejwt==4.7.2
 django-cors-headers==3.13.0
+django-colorfield==0.11.0
 djoser==2.1.0
+drf-extra-fields>=1.0.0
 flake8==6.1.0
 gunicorn==21.2.0
 idna==3.4
@@ -53,4 +55,3 @@ termcolor==1.1.0
 typing_extensions==4.8.0
 uritemplate==4.1.1
 urllib3==1.26.18
-django-colorfield==0.11.0

@@ -108,7 +108,7 @@ SIMPLE_JWT = {
 
 DJOSER = {
     'SERIALIZERS': {
-        'user': 'foodgram_api.serializers.CustomUserSerializer',
+        'user': 'foodgram_api.serializers.UserSerializer',
     },
     'PERMISSIONS': {
         'user': ['rest_framework.permissions.AllowAny'],
