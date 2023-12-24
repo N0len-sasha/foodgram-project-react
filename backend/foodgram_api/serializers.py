@@ -126,10 +126,10 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         recipe_ingredients = [
             RecipeIngredient(
                 recipe=recipe,
-                ingredient=ingredient_data['id'],
-                amount=ingredient_data['amount'],
+                ingredient=ingredient['id'],
+                amount=ingredient['amount']
             )
-            for ingredient_data in ingredients_data
+            for ingredient in ingredients_data
         ]
         RecipeIngredient.objects.bulk_create(recipe_ingredients)
 
@@ -142,20 +142,30 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Теги должны быть уникальными.')
         return value
 
-    def validate_ingredients(self, value):
-        if not value:
+    def validate(self, data):
+        ingredients = data.get('ingredients', [])
+
+        if not ingredients:
             raise serializers.ValidationError(
                 'Список ингредиентов не может быть пустым.'
             )
 
-        ingredient_ids = {el['id'] for el in value}
+        seen_ids = set()
+        unique_ingredients = []
 
-        if len(ingredient_ids) != len(value):
-            raise serializers.ValidationError(
-                'Дубликаты ингредиентов не разрешены.'
-            )
+        for el in ingredients:
+            ingredient_id = el.get('id')
 
-        return value
+            if ingredient_id in seen_ids:
+                raise serializers.ValidationError(
+                    'Дубликаты ингредиентов не разрешены.'
+                )
+
+            seen_ids.add(ingredient_id)
+            unique_ingredients.append(el)
+
+        data['ingredients'] = unique_ingredients
+        return data
 
     def create(self, validated_data):
         ingredients_data = validated_data.pop('ingredients')
