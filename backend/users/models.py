@@ -19,7 +19,7 @@ class FoodgramUser(AbstractUser):
                    'цифры и символы @+-'),
         validators=[validator_username],
         error_messages={
-            'unique': ("Пользователь с таким именем уже сущетсвует"),
+            'unique': ('Пользователь с таким именем уже сущетсвует'),
         },
     )
     email = models.EmailField(
@@ -33,14 +33,10 @@ class FoodgramUser(AbstractUser):
         'Фамилия',
         max_length=MAX_USER_CHARACTERS)
 
-    def save(self, *args, **kwargs):
-        self.email = self.email.lower()
-        super().save(*args, **kwargs)
-
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
-        ordering = ['first_name']
+        ordering = ['id']
 
     def __str__(self):
         return self.username
@@ -58,10 +54,15 @@ class BaseModel(models.Model):
 
 
 class Follow(BaseModel):
-    user_follow = models.ManyToManyField(
+    user_follow = models.ForeignKey(
         FoodgramUser,
-        through='FollowUser',
-        related_name='follows'
+        on_delete=models.CASCADE,
+        related_name='follower'
+    )
+    user = models.ForeignKey(
+        FoodgramUser,
+        on_delete=models.CASCADE,
+        related_name='following'
     )
 
     class Meta:
@@ -70,16 +71,3 @@ class Follow(BaseModel):
 
     def __str__(self):
         return f'Follow {self.pk}'
-
-
-class FollowUser(models.Model):
-    follow = models.ForeignKey(
-        Follow,
-        on_delete=models.CASCADE,
-        related_name='followuser'
-    )
-    user_follow = models.ForeignKey(
-        FoodgramUser,
-        on_delete=models.CASCADE,
-        related_name='followuser'
-    )

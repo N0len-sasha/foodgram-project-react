@@ -19,7 +19,7 @@ class UserSerializer(serializers.ModelSerializer):
         return (
             'request' in self.context and
             self.context['request'].user.is_authenticated and
-            Follow.objects.filter(author=self.context['request'].user,
+            Follow.objects.filter(user=self.context['request'].user,
                                   user_follow=obj).exists()
         )
 
@@ -63,7 +63,6 @@ class GetIngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeSerializer(serializers.ModelSerializer):
-    image = RelativeMediaURLField(max_length=None, use_url=False)
     tags = TagSerializer(many=True)
     author = UserSerializer(read_only=True)
     ingredients = GetIngredientSerializer(many=True,
@@ -84,7 +83,8 @@ class RecipeSerializer(serializers.ModelSerializer):
         return (
             'request' in self.context and
             user.is_authenticated and
-            Favorites.objects.filter(author=user).exists()
+            Favorites.objects.filter(user=user,
+                                     recipe=obj).exists()
         )
 
     def get_is_in_shopping_cart(self, obj):
@@ -92,7 +92,8 @@ class RecipeSerializer(serializers.ModelSerializer):
         return (
             'request' in self.context and
             user.is_authenticated and
-            CheckList.objects.filter(author=user).exists()
+            CheckList.objects.filter(user=user,
+                                     recipe=obj).exists()
         )
 
 
@@ -109,7 +110,7 @@ class CreateIngredientSerializer(serializers.ModelSerializer):
 
 
 class CreateRecipeSerializer(serializers.ModelSerializer):
-    image = Base64ImageField(max_length=None, use_url=False,
+    image = Base64ImageField(max_length=None,
                              allow_null=False, allow_empty_file=False)
     tags = serializers.PrimaryKeyRelatedField(many=True,
                                               queryset=Tag.objects.all())
@@ -221,14 +222,16 @@ class RecipeReturnSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'image', 'cooking_time']
 
 
-class FollowReturnSerializer(UserSerializer):
+class ReturnSerializer(UserSerializer):
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.ReadOnlyField(source='recipes.count')
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = FoodgramUser
-        fields = list(UserSerializer.Meta.fields) + ['recipes', 'recipes_count']
+        fields = list(UserSerializer.Meta.fields) + (
+            ['recipes', 'recipes_count']
+        )
 
     def get_recipes(self, obj):
         recipes_limit = self.context['request'].query_params.get(
@@ -247,6 +250,6 @@ class FollowReturnSerializer(UserSerializer):
         return (
             'request' in self.context and
             self.context['request'].user.is_authenticated and
-            Follow.objects.filter(author=self.context['request'].user,
+            Follow.objects.filter(user=self.context['request'].user,
                                   user_follow=obj).exists()
         )

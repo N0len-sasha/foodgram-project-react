@@ -50,7 +50,7 @@ class Recipe(admin.ModelAdmin):
 
 @admin.register(CheckList)
 class CheckList(admin.ModelAdmin):
-    list_display = ['display_recipes', 'author']
+    list_display = ['display_recipes', 'user']
 
     @admin.display(description='Рецепты')
     def display_recipes(self, obj):
@@ -61,7 +61,7 @@ class CheckList(admin.ModelAdmin):
 
 @admin.register(Favorites)
 class Favorites(admin.ModelAdmin):
-    list_display = ['display_favorites', 'author']
+    list_display = ['display_favorites', 'user']
 
     @admin.display(description='Избранное')
     def display_favorites(self, obj):

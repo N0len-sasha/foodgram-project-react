@@ -16,17 +16,6 @@ from .constants import (MIN_INGREDIENT_VALUE,
                         MAX_INGREDIENT_VALIDATION_MESSAGE)
 
 
-class BaseModel(models.Model):
-    author = models.ForeignKey(
-        FoodgramUser,
-        null=True,
-        on_delete=models.CASCADE
-    )
-
-    class Meta:
-        abstract = True
-
-
 class Tag(models.Model):
     name = models.CharField(
         'Название',
@@ -141,40 +130,35 @@ class RecipeIngredient(models.Model):
     )
 
 
-class CheckList(BaseModel):
-    recipe = models.ManyToManyField(
+class BaseModel(models.Model):
+    recipe = models.ForeignKey(
         Recipe,
-        through='CheckListRecipe',
-        related_name='checklist_recipes'
+        on_delete=models.CASCADE,
+        related_name='%(class)s'
     )
+    user = models.ForeignKey(
+        FoodgramUser,
+        null=True,
+        on_delete=models.CASCADE,
+        related_name='%(class)s'
+    )
+
+    class Meta:
+        abstract = True
+        unique_together = ['user', 'recipe']
+
+
+class CheckList(BaseModel):
 
     class Meta:
         verbose_name = 'Чеклист'
         verbose_name_plural = 'Чеклисты'
 
     def __str__(self):
-        return f'CheckList {self.pk}'
-
-
-class CheckListRecipe(models.Model):
-    checklist = models.ForeignKey(
-        CheckList,
-        on_delete=models.CASCADE,
-        related_name='checklistrecipe'
-    )
-    recipe = models.ForeignKey(
-        Recipe,
-        on_delete=models.CASCADE,
-        related_name='checklistrecipe'
-    )
+        return f'Чеклист {self.pk}'
 
 
 class Favorites(BaseModel):
-    recipe = models.ManyToManyField(
-        Recipe,
-        through='FavoritesRecipe',
-        related_name='favorites_recipes'
-    )
 
     class Meta:
         verbose_name = 'Избранное'
@@ -182,16 +166,3 @@ class Favorites(BaseModel):
 
     def __str__(self):
         return f'Favorites {self.pk}'
-
-
-class FavoritesRecipe(models.Model):
-    favorites = models.ForeignKey(
-        Favorites,
-        on_delete=models.CASCADE,
-        related_name='favoritesrecipe'
-    )
-    recipe = models.ForeignKey(
-        Recipe,
-        on_delete=models.CASCADE,
-        related_name='favoritesrecipe'
-    )

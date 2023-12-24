@@ -1,5 +1,6 @@
 import csv
 from collections import defaultdict
+
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
 from django.http import HttpResponse
@@ -18,7 +19,7 @@ from .serializers import (TagSerializer,
                           IngredientSerializer,
                           RecipeSerializer,
                           RecipeReturnSerializer,
-                          FollowReturnSerializer,
+                          ReturnSerializer,
                           UserSerializer,
                           CreateRecipeSerializer,)
 from .pagination import CustomPageNumberPagination
@@ -59,14 +60,19 @@ class RecipeViewSet(StandartObjectMixim):
             if is_in_shopping_cart is not None and int(
                is_in_shopping_cart) == 1:
                 try:
-                    checklist = CheckList.objects.get(author=self.request.user)
-                    return checklist.recipe
+                    checklists = self.request.user.checklist
+                    recipe_ids_in_checklists = checklists.values_list(
+                        'recipe__id', flat=True
+                    )
+                    return Recipe.objects.filter(
+                        id__in=recipe_ids_in_checklists
+                    )
                 except CheckList.DoesNotExist:
                     return Recipe.objects.none()
 
             if is_favorited is not None and int(is_favorited) == 1:
                 try:
-                    favorites = Favorites.objects.get(author=self.request.user)
+                    favorites = Favorites.objects.get(user=self.request.user)
                     return favorites.recipe
                 except Favorites.DoesNotExist:
                     return Recipe.objects.none()
@@ -101,10 +107,14 @@ class CheckListViewSet(ViewSet):
             return Response({'detail': 'Рецепт не найден'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        checklist, created = CheckList.objects.get_or_create(
-            author=request.user)
-        if recipe not in checklist.recipe.all():
-            checklist.recipe.add(recipe)
+        checklists = self.request.user.checklist
+        recipe_ids_in_checklists = checklists.values_list(
+            'recipe__id', flat=True
+        )
+
+        if recipe not in recipe_ids_in_checklists:
+            CheckList.objects.get_or_create(user=self.request.user,
+                                            recipe=recipe)
             recipe_serializer = RecipeReturnSerializer(recipe)
             return Response(recipe_serializer.data,
                             status=status.HTTP_201_CREATED)
@@ -123,18 +133,15 @@ class CheckListViewSet(ViewSet):
             return Response({'detail': 'Рецепт не найден'},
                             status=status.HTTP_404_NOT_FOUND)
         try:
-            checklist = CheckList.objects.get(author=self.request.user)
+            checklist = CheckList.objects.get(user=self.request.user,
+                                              recipe=recipe)
         except CheckList.DoesNotExist:
             return Response({'detail':
                              'Такого рецепта не было добавлено в чек лист'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        if recipe in checklist.recipe.all():
-            checklist.recipe.remove(recipe)
-            return Response(status=status.HTTP_204_NO_CONTENT)
-
-        return Response({'detail': 'Рецепта нет в чеклисте'},
-                        status=status.HTTP_404_NOT_FOUND)
+        checklist.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class FavoritesViewSet(ViewSet):
@@ -150,10 +157,16 @@ class FavoritesViewSet(ViewSet):
             return Response({'detail': 'Рецепт не найден'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        favorites, created = Favorites.objects.get_or_create(
-            author=request.user)
-        if recipe not in favorites.recipe.all():
-            favorites.recipe.add(recipe)
+        favorites = self.request.user.favorites
+        recipe_ids_in_favorites = favorites.values_list(
+            'recipe__id', flat=True
+        )
+
+        if recipe not in recipe_ids_in_favorites:
+            favorites, created = Favorites.objects.get_or_create(
+                user=request.user,
+                recipe=recipe
+            )
             recipe_serializer = RecipeReturnSerializer(recipe)
             return Response(recipe_serializer.data,
                             status=status.HTTP_201_CREATED)
@@ -172,17 +185,14 @@ class FavoritesViewSet(ViewSet):
             return Response({'detail': 'Рецепт не найден'},
                             status=status.HTTP_404_NOT_FOUND)
         try:
-            favorites = Favorites.objects.get(author=self.request.user)
+            favorites = Favorites.objects.get(user=self.request.user,
+                                              recipe=recipe)
         except Favorites.DoesNotExist:
             return Response({'detail': 'Данного рецепта нет в избранном'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        if recipe in favorites.recipe.all():
-            favorites.recipe.remove(recipe)
-            return Response(status=status.HTTP_204_NO_CONTENT)
-
-        return Response({'detail': 'Рецепта нет в избранном'},
-                        status=status.HTTP_404_NOT_FOUND)
+        favorites.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class FollowViewSet(ViewSet):
@@ -204,14 +214,18 @@ class FollowViewSet(ViewSet):
             return Response({'detail': 'Требуется авторизация'},
                             status=status.HTTP_401_UNAUTHORIZED)
 
-        follow, created = Follow.objects.get_or_create(
-            author=request.user)
-        if follow_user not in follow.user_follow.all():
-            follow.user_follow.add(follow_user)
-            recipe_serializer = FollowReturnSerializer(
-                follow_user,
-                context={'request': request}
+        followings = self.request.user.following
+        recipe_ids_in_foolowing = followings.values_list(
+            'user_follow__id', flat=True
+        )
+
+        if follow_user not in recipe_ids_in_foolowing:
+            Follow.objects.get_or_create(
+                user=request.user,
+                user_follow=follow_user
             )
+            recipe_serializer = ReturnSerializer(follow_user,
+                                                 context={'request': self.request})
             return Response(recipe_serializer.data,
                             status=status.HTTP_201_CREATED)
 
@@ -229,29 +243,26 @@ class FollowViewSet(ViewSet):
             return Response({'detail': 'Пользователь не существует'},
                             status=status.HTTP_404_NOT_FOUND)
         try:
-            follows = Follow.objects.get(author=self.request.user)
+            follows = Follow.objects.get(user=self.request.user,
+                                         user_follow=follow_user)
         except Follow.DoesNotExist:
             return Response({'detail': 'Такого пользователя нет в подписках'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        if follow_user in follows.user_follow.all():
-            follows.user_follow.remove(follow_user)
-            return Response(status=status.HTTP_204_NO_CONTENT)
-
-        return Response({'detail': 'Пользователя нет в подписках'},
-                        status=status.HTTP_400_BAD_REQUEST)
+        follows.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class SubscriptionsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     queryset = FoodgramUser.objects.all()
-    serializer_class = FollowReturnSerializer
+    serializer_class = ReturnSerializer
     pagination_class = LimitOffsetPagination
     permission_classes = [AllowAny]
 
     def get_queryset(self):
-        follows = Follow.objects.get(author=self.request.user.id)
-        user_ids = follows.user_follow.values_list('id', flat=True)
-        return FoodgramUser.objects.filter(id__in=user_ids)
+        followers_ids = self.request.user.following.values_list('user_follow',
+                                                                flat=True)
+        return FoodgramUser.objects.filter(id__in=followers_ids)
 
 
 class DownloadShoppingCartView(views.APIView):
@@ -259,7 +270,7 @@ class DownloadShoppingCartView(views.APIView):
 
     def get(self, request, format=None):
         user = self.request.user
-        checklist = CheckList.objects.get(author=user)
+        checklist = CheckList.objects.get(user=user)
         recipes = checklist.recipe.all()
 
         ingredient_totals = defaultdict(int)
@@ -298,21 +309,15 @@ class CustomUserViewSet(UserViewSet):
     pagination_class = LimitOffsetPagination
     permission_classes = [AllowAny]
 
-    def get_object(self):
-        queryset = self.get_queryset()
-        user = get_object_or_404(queryset, id=self.kwargs['id'])
-        return user
+    def get_queryset(self):
+        return FoodgramUser.objects.all()
 
-    def get_serializer_class(self):
-        if self.action == 'me':
-            return UserSerializer
-        return super().get_serializer_class()
+    # def get_object(self):
+    #     queryset = self.get_queryset()
+    #     user = get_object_or_404(queryset, id=self.kwargs['id'])
+    #     return user
 
-    def get_permissions(self):
-        if self.action == 'me':
-            permission_classes = [IsAuthenticated]
-        elif self.action == 'retrive':
-            permission_classes = [AllowAny]
-        else:
-            permission_classes = [AllowAny]
-        return [permission() for permission in permission_classes]
+    # def get_serializer_class(self):
+    #     if self.action == 'me':
+    #         return UserSerializer
+    #     return super().get_serializer_class()

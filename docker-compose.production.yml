@@ -35,4 +35,4 @@ services:
       - frontend
     volumes:
       - static:/staticfiles/
-      - media:/media
+      - media:/var/html/media/
