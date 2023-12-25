@@ -55,7 +55,6 @@ class CheckList(admin.ModelAdmin):
     list_display = ['recipe', 'user']
 
 
-
 @admin.register(Favorites)
 class Favorites(admin.ModelAdmin):
     list_display = ['recipe', 'user']

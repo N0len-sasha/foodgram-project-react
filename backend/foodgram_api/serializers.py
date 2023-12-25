@@ -2,12 +2,11 @@ from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from drf_extra_fields.fields import Base64ImageField as DRF_Base64ImageField
 from django.core.validators import MinValueValidator
+from rest_framework import status
 
 from .models import (Tag, Ingredient, Favorites,
                      Recipe, CheckList, RecipeIngredient)
 from users.models import FoodgramUser, Follow
-from rest_framework.response import Response
-from rest_framework import status
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -20,10 +19,12 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_is_subscribed(self, obj):
         return (
-            'request' in self.context and
-            self.context['request'].user.is_authenticated and
-            Follow.objects.filter(user=self.context['request'].user,
-                                  user_follow=obj).exists()
+            'request' in self.context and (
+                self.context['request'].user.is_authenticated
+            ) and (
+                    Follow.objects.filter(user=self.context['request'].user,
+                                          user_follow=obj).exists()
+            )
         )
 
 
@@ -81,19 +82,23 @@ class RecipeSerializer(serializers.ModelSerializer):
     def get_is_favorited(self, obj):
         user = self.context['request'].user
         return (
-            'request' in self.context and
-            user.is_authenticated and
-            Favorites.objects.filter(user=user,
-                                     recipe=obj).exists()
+            'request' in self.context and (
+                user.is_authenticated
+            ) and (
+                Favorites.objects.filter(user=user,
+                                         recipe=obj).exists()
+            )
         )
 
     def get_is_in_shopping_cart(self, obj):
         user = self.context['request'].user
         return (
-            'request' in self.context and
-            user.is_authenticated and
-            CheckList.objects.filter(user=user,
-                                     recipe=obj).exists()
+            'request' in self.context and (
+                user.is_authenticated
+            ) and (
+                CheckList.objects.filter(user=user,
+                                         recipe=obj).exists()
+            )
         )
 
 
@@ -377,8 +382,10 @@ class ReturnSerializer(UserSerializer):
 
     def get_is_subscribed(self, obj):
         return (
-            'request' in self.context and
-            self.context['request'].user.is_authenticated and
-            Follow.objects.filter(user=self.context['request'].user,
-                                  user_follow=obj).exists()
+            'request' in self.context and (
+                self.context['request'].user.is_authenticated
+            ) and (
+                Follow.objects.filter(user=self.context['request'].user,
+                                      user_follow=obj).exists()
+            )
         )
