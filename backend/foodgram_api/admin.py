@@ -7,6 +7,8 @@ from .models import (Tag, RecipeIngredient, Ingredient,
 
 class IngredientItemTabular(admin.TabularInline):
     model = RecipeIngredient
+    verbose_name = 'Ингредиент'
+    verbose_name_plural = 'Ингредиенты'
 
     def get_min_num(self, request, obj=None, **kwargs):
         return 1

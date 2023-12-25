@@ -29,7 +29,7 @@ class Tag(models.Model):
         unique=True,
         max_length=MAX_NAME_LENGH,
         validators=[RegexValidator(r'^[-a-zA-Z0-9_]+$',
-                    'Wrong format')]
+                    'Неправильный формат')]
     )
 
     class Meta:
@@ -74,17 +74,20 @@ class Recipe(models.Model):
     ingredients = models.ManyToManyField(
         Ingredient,
         through='RecipeIngredient',
-        related_name='recipes'
+        related_name='recipes',
+        verbose_name='Ингредиенты'
     )
     tags = models.ManyToManyField(
         Tag,
-        related_name='recipes'
+        related_name='recipes',
+        verbose_name='Тег'
     )
     author = models.ForeignKey(
         FoodgramUser,
         null=True,
         on_delete=models.CASCADE,
-        related_name='recipes'
+        related_name='recipes',
+        verbose_name='Автор'
     )
     cooking_time = models.PositiveSmallIntegerField(
         'Время приготовления',
@@ -113,12 +116,14 @@ class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='recipeingredient'
+        related_name='recipeingredient',
+        verbose_name='Рецепт'
     )
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
-        related_name='recipeingredient'
+        related_name='recipeingredient',
+        verbose_name='Ингредиент'
     )
     amount = models.IntegerField(
         validators=[
@@ -134,13 +139,15 @@ class BaseModel(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='%(class)s'
+        related_name='%(class)s',
+        verbose_name='Рецепт'
     )
     user = models.ForeignKey(
         FoodgramUser,
         null=True,
         on_delete=models.CASCADE,
-        related_name='%(class)s'
+        related_name='%(class)s',
+        verbose_name='Пользователь'
     )
 
     class Meta:
@@ -165,4 +172,4 @@ class Favorites(BaseModel):
         verbose_name_plural = 'Избранное'
 
     def __str__(self):
-        return f'Favorites {self.pk}'
+        return f'Избранное {self.pk}'

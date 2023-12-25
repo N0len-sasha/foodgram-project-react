@@ -46,12 +46,14 @@ class Follow(models.Model):
     user_follow = models.ForeignKey(
         FoodgramUser,
         on_delete=models.CASCADE,
-        related_name='follower'
+        related_name='follower',
+        verbose_name='Подписан на'
     )
     user = models.ForeignKey(
         FoodgramUser,
         on_delete=models.CASCADE,
-        related_name='following'
+        related_name='following',
+        verbose_name='Пользователь'
     )
 
     class Meta:
