@@ -12,12 +12,3 @@ class GetObjectMixim(mixins.ListModelMixin,
                      mixins.RetrieveModelMixin,
                      viewsets.GenericViewSet):
     pass
-
-
-class StandartObjectMixim(mixins.CreateModelMixin,
-                          mixins.ListModelMixin,
-                          mixins.RetrieveModelMixin,
-                          mixins.UpdateModelMixin,
-                          mixins.DestroyModelMixin,
-                          viewsets.GenericViewSet):
-    pass

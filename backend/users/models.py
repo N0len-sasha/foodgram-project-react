@@ -42,18 +42,7 @@ class FoodgramUser(AbstractUser):
         return self.username
 
 
-class BaseModel(models.Model):
-    author = models.ForeignKey(
-        FoodgramUser,
-        null=True,
-        on_delete=models.CASCADE
-    )
-
-    class Meta:
-        abstract = True
-
-
-class Follow(BaseModel):
+class Follow(models.Model):
     user_follow = models.ForeignKey(
         FoodgramUser,
         on_delete=models.CASCADE,

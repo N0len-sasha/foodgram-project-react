@@ -1,10 +1,13 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-from drf_extra_fields.fields import Base64ImageField
+from drf_extra_fields.fields import Base64ImageField as DRF_Base64ImageField
 from django.core.validators import MinValueValidator
 
 from .models import (Tag, Ingredient, Favorites,
                      Recipe, CheckList, RecipeIngredient)
 from users.models import FoodgramUser, Follow
+from rest_framework.response import Response
+from rest_framework import status
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -24,14 +27,10 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
 
-class RelativeMediaURLField(serializers.ImageField):
-    def to_representation(self, value):
-        if not value:
-            return None
+class Base64ImageField(DRF_Base64ImageField):
 
-        relative_path = super().to_representation(value)
-
-        return f'/media/{relative_path}'
+    def to_representation(self, image):
+        return image.url
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -63,6 +62,7 @@ class GetIngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeSerializer(serializers.ModelSerializer):
+    image = Base64ImageField()
     tags = TagSerializer(many=True)
     author = UserSerializer(read_only=True)
     ingredients = GetIngredientSerializer(many=True,
@@ -110,8 +110,8 @@ class CreateIngredientSerializer(serializers.ModelSerializer):
 
 
 class CreateRecipeSerializer(serializers.ModelSerializer):
-    image = Base64ImageField(max_length=None,
-                             allow_null=False, allow_empty_file=False)
+    image = DRF_Base64ImageField(max_length=None,
+                                 allow_null=False, allow_empty_file=False)
     tags = serializers.PrimaryKeyRelatedField(many=True,
                                               queryset=Tag.objects.all())
     author = UserSerializer(read_only=True)
@@ -143,6 +143,13 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Теги должны быть уникальными.')
         return value
 
+    def validate_image(self, value):
+        if not value:
+            raise serializers.ValidationError(
+                'Поле image не может быть пустым'
+            )
+        return value
+
     def validate(self, data):
         ingredients = data.get('ingredients', [])
 
@@ -166,6 +173,12 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
             unique_ingredients.append(el)
 
         data['ingredients'] = unique_ingredients
+
+        if 'tags' not in data:
+            raise serializers.ValidationError(
+                'Поле tags обязательно для обновления рецепта.'
+            )
+
         return data
 
     def create(self, validated_data):
@@ -208,18 +221,134 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         return recipe_serializer.data
 
 
-class CheckListSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = CheckList
-        fields = '__all__'
-
-
 class RecipeReturnSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
         fields = ['id', 'name', 'image', 'cooking_time']
+
+
+class FollowSerializer(serializers.Serializer):
+
+    def create(self, validated_data):
+        user_follow_id = validated_data.pop('user_follow_id')
+        user_id = validated_data.pop('user')
+        return Follow.objects.create(user_follow_id=user_follow_id,
+                                     user_id=user_id)
+
+    def validate(self, data):
+        user_follow_id = self.initial_data.get('user_follow_id')
+        user_id = self.initial_data.get('user')
+        data['user_follow_id'] = user_follow_id
+        data['user'] = user_id
+        user = self.context['request'].user
+
+        if not user.is_authenticated:
+            raise serializers.ValidationError('Требуется авторизация')
+
+        if int(user_follow_id) == user_id:
+            raise serializers.ValidationError(
+                'Нельзя подписаться на самого себя'
+            )
+
+        get_object_or_404(FoodgramUser, id=user_follow_id)
+
+        if Follow.objects.filter(user_id=user_id,
+                                 user_follow_id=user_follow_id).exists():
+            raise serializers.ValidationError(
+                f'Рецепт c id {user_follow_id} уже есть в подписках'
+            )
+        return data
+
+    def to_representation(self, instance):
+        user_follow = FoodgramUser.objects.get(id=instance.user_follow_id)
+        user_data = UserSerializer(user_follow).data
+        recipes_limit = self.context['request'].query_params.get(
+            'recipes_limit'
+        )
+        recipes = Recipe.objects.filter(author=user_follow)
+        if recipes_limit:
+            recipes = recipes[:int(recipes_limit)]
+        user_recipes_data = RecipeReturnSerializer(
+            recipes, many=True,
+            context=self.context
+        ).data
+        user_data['recipes'] = user_recipes_data
+        user_data['recipes_count'] = recipes.count()
+
+        return user_data
+
+
+class CheckListSerializer(serializers.Serializer):
+
+    def create(self, validated_data):
+        recipe_id = validated_data.pop('recipe_id')
+        user_id = validated_data.pop('user')
+        return CheckList.objects.create(recipe_id=recipe_id,
+                                        user_id=user_id)
+
+    def validate(self, data):
+        recipe_id = self.initial_data.get('recipe_id')
+        user_id = self.initial_data.get('user')
+        data['recipe_id'] = recipe_id
+        data['user'] = user_id
+        user = self.context['request'].user
+        if not user.is_authenticated:
+            return serializers.ValidationError(
+                {'detail': 'Требуется авторизация'},
+                status=status.HTTP_401_UNAUTHORIZED)
+        try:
+            Recipe.objects.get(id=recipe_id)
+        except Recipe.DoesNotExist:
+            raise serializers.ValidationError(
+                f'Рецепт c id {recipe_id} не найден'
+            )
+        if CheckList.objects.filter(user_id=user_id,
+                                    recipe_id=recipe_id).exists():
+            raise serializers.ValidationError(
+                f'Рецепт c id {recipe_id} уже есть в чеклисте'
+            )
+        return data
+
+    def to_representation(self, instance):
+        recipe = Recipe.objects.get(id=instance.recipe_id)
+        return RecipeReturnSerializer(recipe).data
+
+
+class FavoritesSerializer(serializers.Serializer):
+
+    def create(self, validated_data):
+        recipe_id = validated_data.pop('recipe_id')
+        user_id = validated_data.pop('user')
+        return Favorites.objects.create(recipe_id=recipe_id,
+                                        user_id=user_id)
+
+    def validate(self, data):
+        recipe_id = self.initial_data.get('recipe_id')
+        user_id = self.initial_data.get('user')
+        data['recipe_id'] = recipe_id
+        data['user'] = user_id
+        user = self.context['request'].user
+        if not user.is_authenticated:
+            return serializers.ValidationError(
+                {'detail': 'Требуется авторизация'},
+                status=status.HTTP_401_UNAUTHORIZED)
+        try:
+            Recipe.objects.get(id=recipe_id)
+        except Recipe.DoesNotExist:
+            raise serializers.ValidationError(
+                f'Рецепт c id {recipe_id} не найден'
+            )
+        if Favorites.objects.filter(user_id=user_id,
+                                    recipe_id=recipe_id).exists():
+            raise serializers.ValidationError(
+                f'Рецепт c id {recipe_id} уже есть в избранном'
+            )
+        return data
+
+    def to_representation(self, instance):
+        recipe = Recipe.objects.get(id=instance.recipe_id)
+        return RecipeReturnSerializer(recipe).data
 
 
 class ReturnSerializer(UserSerializer):

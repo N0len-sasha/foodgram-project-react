@@ -7,13 +7,7 @@ from .models import FoodgramUser, Follow
 
 @admin.register(Follow)
 class Follow(admin.ModelAdmin):
-    list_display = ['display_follow', 'author']
-
-    @admin.display(description='Подписки')
-    def display_follow(self, obj):
-        return ', '.join([user.first_name for user in obj.user_follow.all()])
-
-    display_follow.short_description = 'Подписки'
+    list_display = ['user_follow', 'user']
 
 
 @admin.register(FoodgramUser)
@@ -25,12 +19,13 @@ class CustomUser(BaseUserAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(
-            recipes_count=Count('recipe'),
+            recipes_count=Count('recipes'),
+            followers_count=Count('follower'),
         )
 
     @admin.display(description='Подписчики')
     def get_followers(self, obj):
-        return obj.followuser.count()
+        return obj.followers_count
 
     @admin.display(description='Созданные рецепты')
     def get_recipes(self, obj):

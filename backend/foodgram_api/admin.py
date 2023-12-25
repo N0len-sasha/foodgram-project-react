@@ -14,7 +14,7 @@ class IngredientItemTabular(admin.TabularInline):
 
 @admin.register(Tag)
 class Tag(admin.ModelAdmin):
-    list_display = ('name', 'slug')
+    list_display = ('name', 'slug', 'color')
 
 
 @admin.register(Ingredient)
@@ -35,7 +35,7 @@ class Recipe(admin.ModelAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(
-            favorites_count=models.Count('favoritesrecipe')
+            favorites_count=models.Count('favorites')
         )
 
     @admin.display(description='Ингредиенты')
@@ -50,21 +50,10 @@ class Recipe(admin.ModelAdmin):
 
 @admin.register(CheckList)
 class CheckList(admin.ModelAdmin):
-    list_display = ['display_recipes', 'user']
+    list_display = ['recipe', 'user']
 
-    @admin.display(description='Рецепты')
-    def display_recipes(self, obj):
-        return ', '.join([recipe.name for recipe in obj.recipe.all()])
-
-    display_recipes.short_description = 'Рецепты'
 
 
 @admin.register(Favorites)
 class Favorites(admin.ModelAdmin):
-    list_display = ['display_favorites', 'user']
-
-    @admin.display(description='Избранное')
-    def display_favorites(self, obj):
-        return ', '.join([recipe.name for recipe in obj.recipe.all()])
-
-    display_favorites.short_description = 'Избранное'
+    list_display = ['recipe', 'user']
