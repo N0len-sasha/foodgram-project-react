@@ -20,14 +20,14 @@ class Tag(admin.ModelAdmin):
 @admin.register(Ingredient)
 class Ingredient(admin.ModelAdmin):
     list_display = ('name', 'measurement_unit')
-    list_filter = ['name']
+    list_filter = ('name')
 
 
 @admin.register(Recipe)
 class Recipe(admin.ModelAdmin):
-    list_display = ['name', 'author', 'favorites_count', 'display_ingredients']
+    list_display = ('name', 'author', 'favorites_count', 'display_ingredients')
 
-    list_filter = ['author', 'name', 'tags']
+    list_filter = ('author', 'name', 'tags')
 
     inlines = [
         IngredientItemTabular,
@@ -40,8 +40,9 @@ class Recipe(admin.ModelAdmin):
 
     @admin.display(description='Ингредиенты')
     def display_ingredients(self, obj):
-        ingredients = obj.ingredients.all()
-        return ', '.join(str(ingredient) for ingredient in ingredients)
+        return ', '.join(
+            ingredient.name for ingredient in obj.ingredients.all()
+        )
 
     @admin.display(description='Добавлено в избранное (кол-во)')
     def favorites_count(self, obj):
