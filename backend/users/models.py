@@ -17,7 +17,7 @@ class FoodgramUser(AbstractUser):
         unique=True,
         help_text=('Обязательное поле. Не более 150 символов. Только буквы,'
                    'цифры и символы @+-'),
-        validators=[validator_username],
+        validators=(validator_username, ),
         error_messages={
             'unique': ('Пользователь с таким именем уже сущетсвует'),
         },
@@ -36,7 +36,7 @@ class FoodgramUser(AbstractUser):
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
-        ordering = ['id']
+        ordering = ['first_name', 'last_name']
 
     def __str__(self):
         return self.username
@@ -46,19 +46,30 @@ class Follow(models.Model):
     user_follow = models.ForeignKey(
         FoodgramUser,
         on_delete=models.CASCADE,
-        related_name='follower',
+        related_name='usertofollow',
         verbose_name='Подписан на'
     )
     user = models.ForeignKey(
         FoodgramUser,
         on_delete=models.CASCADE,
-        related_name='following',
+        related_name='whofollow',
         verbose_name='Пользователь'
     )
 
     class Meta:
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'user_follow'),
+                name='no_self_subscriptions'
+            ),
+            models.CheckConstraint(
+                name='unique_subscriptions',
+                check=~models.Q(user=models.F('user_follow')),
+            ),
+        ]
 
     def __str__(self):
-        return f'Follow {self.pk}'
+        return (f'Пользователь {self.user.username}'
+                f'подписан на {self.user_follow.username}')

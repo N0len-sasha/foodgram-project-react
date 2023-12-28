@@ -7,7 +7,7 @@ from .models import FoodgramUser, Follow
 
 @admin.register(Follow)
 class Follow(admin.ModelAdmin):
-    list_display = ['user_follow', 'user']
+    list_display = ('user_follow', 'user')
 
 
 @admin.register(FoodgramUser)

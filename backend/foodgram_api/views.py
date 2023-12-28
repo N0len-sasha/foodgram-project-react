@@ -138,7 +138,7 @@ class SubscriptionsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return FoodgramUser.objects.filter(following__user=self.request.user)
+        return FoodgramUser.objects.filter(whofollow__user=self.request.user)
 
 
 '''Пользователи'''
