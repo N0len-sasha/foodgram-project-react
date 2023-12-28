@@ -28,8 +28,6 @@ class Tag(models.Model):
     slug = models.SlugField(
         unique=True,
         max_length=MAX_NAME_LENGH,
-        validators=[RegexValidator(r'^[-a-zA-Z0-9_]+$',
-                    'Неправильный формат')]
     )
 
     class Meta:
@@ -53,7 +51,12 @@ class Ingredient(models.Model):
     class Meta:
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
-        unique_together = ['name', 'measurement_unit']
+        constraints = (
+            models.UniqueConstraint(
+                fields=('name', 'measurement_unit'),
+                name='unique_ingredient_fields'
+            ),
+        )
 
     def __str__(self):
         return self.name
@@ -84,7 +87,6 @@ class Recipe(models.Model):
     )
     author = models.ForeignKey(
         FoodgramUser,
-        null=True,
         on_delete=models.CASCADE,
         related_name='recipes',
         verbose_name='Автор'
@@ -125,7 +127,7 @@ class RecipeIngredient(models.Model):
         related_name='recipeingredient',
         verbose_name='Ингредиент'
     )
-    amount = models.IntegerField(
+    amount = models.SmallIntegerField(
         validators=[
             MinValueValidator(MIN_INGREDIENT_VALUE,
                               message=INGREDIENT_VALIDATION_MESSAGE),
@@ -135,7 +137,7 @@ class RecipeIngredient(models.Model):
     )
 
 
-class BaseModel(models.Model):
+class RecipeUserModel(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
@@ -155,7 +157,7 @@ class BaseModel(models.Model):
         unique_together = ['user', 'recipe']
 
 
-class CheckList(BaseModel):
+class CheckList(RecipeUserModel):
 
     class Meta:
         verbose_name = 'Чеклист'
@@ -165,7 +167,7 @@ class CheckList(BaseModel):
         return f'Чеклист {self.pk}'
 
 
-class Favorites(BaseModel):
+class Favorites(RecipeUserModel):
 
     class Meta:
         verbose_name = 'Избранное'

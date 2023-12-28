@@ -25,7 +25,6 @@ from .serializers import (TagSerializer,
                           CreateRecipeSerializer,
                           CheckListSerializer)
 from .pagination import PageNumberPagination
-from .mixims import GetObjectMixim
 from .permissions import IsAuthorOrReadOnly
 from .filters import CustomSearchFilter, RecipeFilter
 
@@ -36,7 +35,7 @@ class TagViewSet(ReadOnlyModelViewSet):
     pagination_class = None
 
 
-class IngredientViewSet(GetObjectMixim):
+class IngredientViewSet(ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     pagination_class = None
