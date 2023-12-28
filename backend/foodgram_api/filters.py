@@ -1,8 +1,7 @@
 from rest_framework.filters import SearchFilter
 from django_filters import rest_framework as filters
 
-
-from .models import Recipe, CheckList, Favorites
+from .models import Recipe
 
 
 class CustomSearchFilter(SearchFilter):
@@ -24,36 +23,20 @@ class RecipeFilter(filters.FilterSet):
 
     class Meta:
         model = Recipe
-        fields = ['author', 'tags']
+        fields = ('author', 'tags')
 
     def filter_is_favorited(self, queryset, name, value):
-        is_favorited = self.request.query_params.get(
-            'is_favorited'
-        )
-        if is_favorited is not None and int(
-            is_favorited) == 1 and (
-                self.request.user.is_authenticated):
-            try:
-                favorites_id = self.request.user.favorites.all().values(
-                    'recipe_id'
+        if value:
+            if value == '1' and self.request.user.is_authenticated:
+                return Recipe.objects.filter(
+                    id__in=self.request.user.favorites.values('recipe_id')
                 )
-                return Recipe.objects.filter(id__in=favorites_id)
-            except Favorites.DoesNotExist:
-                return Recipe.objects.none()
         return queryset
 
     def filter_is_in_shopping_cart(self, queryset, name, value):
-        is_in_shopping_cart = self.request.query_params.get(
-            'is_in_shopping_cart'
-        )
-        if is_in_shopping_cart is not None and int(
-            is_in_shopping_cart) == 1 and (
-                self.request.user.is_authenticated):
-            try:
-                checklist_id = self.request.user.checklist.all().values(
-                    'recipe_id'
+        if value:
+            if value == '1' and self.request.user.is_authenticated:
+                return Recipe.objects.filter(
+                    id__in=self.request.user.checklist.values('recipe_id')
                 )
-                return Recipe.objects.filter(id__in=checklist_id)
-            except CheckList.DoesNotExist:
-                return Recipe.objects.none()
         return queryset

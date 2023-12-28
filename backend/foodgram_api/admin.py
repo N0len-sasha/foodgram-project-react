@@ -20,7 +20,7 @@ class Tag(admin.ModelAdmin):
 @admin.register(Ingredient)
 class Ingredient(admin.ModelAdmin):
     list_display = ('name', 'measurement_unit')
-    list_filter = ('name')
+    list_filter = ('name', )
 
 
 @admin.register(Recipe)

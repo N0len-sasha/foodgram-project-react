@@ -24,7 +24,7 @@ from .serializers import (TagSerializer,
                           FavoritesSerializer,
                           CreateRecipeSerializer,
                           CheckListSerializer)
-from .pagination import CustomPageNumberPagination
+from .pagination import PageNumberPagination
 from .mixims import GetObjectMixim
 from .permissions import IsAuthorOrReadOnly
 from .filters import CustomSearchFilter, RecipeFilter
@@ -47,7 +47,7 @@ class IngredientViewSet(GetObjectMixim):
 class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.select_related('author').prefetch_related(
         'tags', 'ingredients').all()
-    pagination_class = CustomPageNumberPagination
+    pagination_class = PageNumberPagination
     permission_classes = [IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
     filter_backends = [DjangoFilterBackend]
     filterset_class = RecipeFilter
@@ -134,7 +134,7 @@ class RecipeViewSet(ModelViewSet):
 class SubscriptionsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     queryset = FoodgramUser.objects.all()
     serializer_class = ReturnSerializer
-    pagination_class = CustomPageNumberPagination
+    pagination_class = PageNumberPagination
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -147,7 +147,7 @@ class SubscriptionsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
 class CustomUserViewSet(UserViewSet):
     queryset = FoodgramUser.objects.all()
     serializer_class = UserSerializer
-    pagination_class = CustomPageNumberPagination
+    pagination_class = PageNumberPagination
     permission_classes = [IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
 
     def get_queryset(self):
