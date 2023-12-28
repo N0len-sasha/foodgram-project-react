@@ -7,7 +7,6 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 from rest_framework.permissions import (IsAuthenticatedOrReadOnly,
                                         IsAuthenticated)
-from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from rest_framework import status, mixins, viewsets
 from rest_framework.decorators import action
@@ -135,7 +134,7 @@ class RecipeViewSet(ModelViewSet):
 class SubscriptionsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     queryset = FoodgramUser.objects.all()
     serializer_class = ReturnSerializer
-    pagination_class = LimitOffsetPagination
+    pagination_class = CustomPageNumberPagination
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -148,7 +147,7 @@ class SubscriptionsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
 class CustomUserViewSet(UserViewSet):
     queryset = FoodgramUser.objects.all()
     serializer_class = UserSerializer
-    pagination_class = LimitOffsetPagination
+    pagination_class = CustomPageNumberPagination
     permission_classes = [IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
 
     def get_queryset(self):
