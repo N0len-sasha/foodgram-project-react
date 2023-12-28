@@ -1,7 +1,6 @@
 import csv
 import json
 
-from django.db import transaction
 from termcolor import colored
 
 from .models import Ingredient, Tag
@@ -12,17 +11,14 @@ def import_ingredients_from_csv():
         with open('data/ingredients.csv',
                   'r',
                   encoding='utf-8') as csv_file:
-            csv_reader = csv.reader(csv_file)
-            next(csv_reader)
+
             print(colored('Началась загрузка ингредиентов', 'yellow'))
 
-            with transaction.atomic():
-                for row in csv_reader:
-                    name, measurement_unit = map(str.strip, row)
-                    Ingredient.objects.get_or_create(
-                        name=name,
-                        measurement_unit=measurement_unit
-                    )
+            for name, measurement_unit in csv.reader(csv_file):
+                Ingredient.objects.create(
+                    name=name,
+                    measurement_unit=measurement_unit
+                )
 
         print(colored('Данные из CSV загружены', 'green'))
 
@@ -53,13 +49,14 @@ def import_ingredients_from_json():
 
 def create_tags():
     print(colored('Началась загрузка тегов', 'yellow'))
-    Tag.objects.get_or_create(name='Завтрак',
-                              color='#EE204D',
-                              slug='breakfast')
-    Tag.objects.get_or_create(name='Обед',
-                              color='#008000',
-                              slug='lunch')
-    Tag.objects.get_or_create(name='Ужин',
-                              color='#78DBE2',
-                              slug='dinner')
-    print(colored('Загрузка тегов заверешена успешно!', 'green'))
+
+    tags_data = [
+        {'name': 'Завтрак', 'color': '#EE204D', 'slug': 'breakfast'},
+        {'name': 'Обед', 'color': '#008000', 'slug': 'lunch'},
+        {'name': 'Ужин', 'color': '#78DBE2', 'slug': 'dinner'},
+    ]
+
+    for tag_data in tags_data:
+        Tag.objects.create(**tag_data)
+
+    print(colored('Загрузка тегов завершена успешно!', 'green'))
