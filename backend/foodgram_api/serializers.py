@@ -279,76 +279,53 @@ class FollowSerializer(serializers.Serializer):
         return user_data
 
 
-class CheckListSerializer(serializers.Serializer):
-
-    def create(self, validated_data):
-        recipe_id = validated_data.pop('recipe')
-        user_id = validated_data.pop('user')
-        return CheckList.objects.create(recipe_id=recipe_id,
-                                        user_id=user_id)
+class BaseRecipeActionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = None
+        fields = ['recipe', 'user']
 
     def validate(self, data):
         recipe_id = self.initial_data.get('recipe')
         user_id = self.initial_data.get('user')
-        data['recipe'] = recipe_id
-        data['user'] = user_id
+        data['recipe'] = Recipe.objects.get(id=recipe_id)
+        data['user'] = FoodgramUser.objects.get(id=user_id)
         user = self.context['request'].user
         if not user.is_authenticated:
-            return serializers.ValidationError(
+            raise serializers.ValidationError(
                 {'detail': 'Требуется авторизация'},
                 status=status.HTTP_401_UNAUTHORIZED)
-        try:
-            Recipe.objects.get(id=recipe_id)
-        except Recipe.DoesNotExist:
+
+        if not Recipe.objects.filter(id=recipe_id).exists():
             raise serializers.ValidationError(
                 {'detail': f'Рецепт c id {recipe_id} не найден'}
             )
-        if CheckList.objects.filter(user_id=user_id,
-                                    recipe_id=recipe_id).exists():
+        if self.Meta.model.objects.filter(user_id=user_id,
+                                          recipe_id=recipe_id).exists():
             raise serializers.ValidationError(
-                {'detail': f'Рецепт c id {recipe_id} уже есть в чеклисте'}
+                ({'detail': f'Рецепт c id {recipe_id} уже'
+                  'есть в {self.action_name}'})
             )
         return data
 
     def to_representation(self, instance):
-        recipe = Recipe.objects.get(id=instance.recipe_id)
-        return RecipeReturnSerializer(recipe).data
+        return RecipeReturnSerializer(
+            Recipe.objects.get(id=instance.recipe_id)).data
 
 
-class FavoritesSerializer(serializers.Serializer):
+class CheckListSerializer(BaseRecipeActionSerializer):
+    class Meta(BaseRecipeActionSerializer.Meta):
+        model = CheckList
+        fields = ['recipe', 'user']
 
-    def create(self, validated_data):
-        recipe_id = validated_data.pop('recipe')
-        user_id = validated_data.pop('user')
-        return Favorites.objects.create(recipe_id=recipe_id,
-                                        user_id=user_id)
+    action_name = 'чеклисте'
 
-    def validate(self, data):
-        recipe_id = self.initial_data.get('recipe')
-        user_id = self.initial_data.get('user')
-        data['recipe'] = recipe_id
-        data['user'] = user_id
-        user = self.context['request'].user
-        if not user.is_authenticated:
-            return serializers.ValidationError(
-                {'detail': 'Требуется авторизация'},
-                status=status.HTTP_401_UNAUTHORIZED)
-        try:
-            Recipe.objects.get(id=recipe_id)
-        except Recipe.DoesNotExist:
-            raise serializers.ValidationError(
-                {'detail': f'Рецепт c id {recipe_id} не найден'}
-            )
-        if Favorites.objects.filter(user_id=user_id,
-                                    recipe_id=recipe_id).exists():
-            raise serializers.ValidationError(
-                {'detail': f'Рецепт c id {recipe_id} уже есть в избранном'}
-            )
-        return data
 
-    def to_representation(self, instance):
-        recipe = Recipe.objects.get(id=instance.recipe_id)
-        return RecipeReturnSerializer(recipe).data
+class FavoritesSerializer(BaseRecipeActionSerializer):
+    class Meta(BaseRecipeActionSerializer.Meta):
+        model = Favorites
+        fields = ['recipe', 'user']
+
+    action_name = 'избранном'
 
 
 class ReturnRecipesCountSerializer(UserSerializer):
