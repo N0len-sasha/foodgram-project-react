@@ -19,7 +19,7 @@ from .serializers import (TagSerializer,
                           IngredientSerializer,
                           RecipeSerializer,
                           FollowSerializer,
-                          ReturnSerializer,
+                          ReturnRecipesCountSerializer,
                           UserSerializer,
                           FavoritesSerializer,
                           CreateRecipeSerializer,
@@ -132,7 +132,7 @@ class RecipeViewSet(ModelViewSet):
 
 class SubscriptionsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     queryset = FoodgramUser.objects.all()
-    serializer_class = ReturnSerializer
+    serializer_class = ReturnRecipesCountSerializer
     pagination_class = PageNumberPagination
     permission_classes = [IsAuthenticated]
 
