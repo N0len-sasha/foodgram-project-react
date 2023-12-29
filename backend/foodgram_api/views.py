@@ -1,20 +1,21 @@
 import csv
+import tempfile
 
 from djoser.views import UserViewSet
-from django.http import HttpResponse
+from django.http import FileResponse
 from django.db.models import Sum
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 from rest_framework.permissions import (IsAuthenticatedOrReadOnly,
                                         IsAuthenticated)
 from rest_framework.response import Response
-from rest_framework import status, mixins, viewsets
+from rest_framework import status, permissions
 from rest_framework.decorators import action
 
 
 from .models import (Tag, Ingredient, Recipe,
                      CheckList, Favorites, RecipeIngredient)
-from users.models import FoodgramUser, Follow
+from users.models import FoodgramUser
 from .serializers import (TagSerializer,
                           IngredientSerializer,
                           RecipeSerializer,
@@ -39,7 +40,7 @@ class IngredientViewSet(ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     pagination_class = None
-    filter_backends = [CustomSearchFilter, ]
+    filter_backends = (CustomSearchFilter, )
     search_fields = ['^name', ]
 
 
@@ -47,21 +48,21 @@ class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.select_related('author').prefetch_related(
         'tags', 'ingredients').all()
     pagination_class = PageNumberPagination
-    permission_classes = [IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
+    permission_classes = [IsAuthorOrReadOnly]
     filter_backends = [DjangoFilterBackend]
     filterset_class = RecipeFilter
     http_method_names = ('get', 'post', 'patch', 'delete')
 
     def get_serializer_class(self):
-        if self.request.method in ['POST', 'PATCH']:
-            return CreateRecipeSerializer
-        return RecipeSerializer
+        if self.request.method in permissions.SAFE_METHODS:
+            return RecipeSerializer
+        return CreateRecipeSerializer
 
     @staticmethod
     def create_object(serializer_class, pk, request):
         create_data = {
             'user': request.user.id,
-            'recipe_id': pk
+            'recipe': pk
         }
         context = {'request': request}
         serializer = serializer_class(data=create_data, context=context)
@@ -71,19 +72,30 @@ class RecipeViewSet(ModelViewSet):
 
     @staticmethod
     def delete_object(model, pk, request):
-        try:
-            Recipe.objects.get(id=pk)
-        except Recipe.DoesNotExist:
+        if not Recipe.objects.filter(id=pk).exists():
             return Response({'detail': 'Рецепт не существует'},
                             status=status.HTTP_404_NOT_FOUND)
 
-        try:
-            obj = model.objects.get(recipe_id=pk, user=request.user)
-        except model.DoesNotExist:
+        obj = model.objects.filter(recipe_id=pk, user=request.user)
+        if not obj.exists():
             return Response({'detail': 'Рецепт не найден'},
                             status=status.HTTP_400_BAD_REQUEST)
+
         obj.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @staticmethod
+    def write_csv_data(ingredients, file_path):
+        with open(file_path, 'w', newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(['Ингредиент', 'Количество', 'Мера'])
+
+            for ingredient in ingredients:
+                writer.writerow([
+                    ingredient['ingredient__name'],
+                    ingredient['total_amount'],
+                    ingredient['ingredient__measurement_unit']
+                ])
 
     @action(detail=True, methods=['post'], url_path='favorite')
     def favorite(self, request, pk):
@@ -103,7 +115,6 @@ class RecipeViewSet(ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='download_shopping_cart')
     def download_shopping_cart(self, request):
-
         ingredients = RecipeIngredient.objects.filter(
             recipe__checklist__user=request.user
         ).values(
@@ -112,32 +123,15 @@ class RecipeViewSet(ModelViewSet):
             total_amount=Sum('amount')
         ).order_by('ingredient__name')
 
-        response = HttpResponse(content_type="text/csv")
-        response['Content-Disposition'] = ('attachment;'
-                                           'filename="Ingredients.csv"')
-        writer = csv.DictWriter(response, fieldnames=['Ингредиент',
-                                                      'Количество',
-                                                      'Мера'])
-        writer.writeheader()
+        temp_file = tempfile.NamedTemporaryFile(delete=False)
+        self.write_csv_data(ingredients, temp_file.name)
 
-        writer.writerows([
-            {'Ингредиент': ingredient['ingredient__name'],
-             'Количество': ingredient['total_amount'],
-             'Мера': ingredient['ingredient__measurement_unit']
-             } for ingredient in ingredients
-        ])
+        response = FileResponse(open(temp_file.name, 'rb'),
+                                as_attachment=True,
+                                filename='Ingredients.csv')
+        temp_file.close()
 
         return response
-
-
-class SubscriptionsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
-    queryset = FoodgramUser.objects.all()
-    serializer_class = ReturnRecipesCountSerializer
-    pagination_class = PageNumberPagination
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return FoodgramUser.objects.filter(whofollow__user=self.request.user)
 
 
 '''Пользователи'''
@@ -149,24 +143,16 @@ class CustomUserViewSet(UserViewSet):
     pagination_class = PageNumberPagination
     permission_classes = [IsAuthenticatedOrReadOnly]
 
-    def get_queryset(self):
-        return FoodgramUser.objects.all()
-
-    def get_serializer_class(self):
-        if self.action == 'me':
-            return UserSerializer
-        return super().get_serializer_class()
-
     def get_permissions(self):
         if self.action == 'me':
-            self.permission_classes = [IsAuthenticated, ]
+            return [IsAuthenticated()]
         return super().get_permissions()
 
     @action(detail=True, methods=['post'], url_path='subscribe')
     def follow(self, request, id):
         create_data = {
             'user': request.user.id,
-            'user_follow_id': id
+            'user_follow': id
         }
         context = {'request': request}
         serializer = FollowSerializer(data=create_data, context=context)
@@ -174,17 +160,27 @@ class CustomUserViewSet(UserViewSet):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    @action(detail=False, methods=['get'], url_path='subscriptions')
+    def subscribtions(self, request):
+        queryset = FoodgramUser.objects.filter(
+            whofollow__user=self.request.user
+        )
+        paginator = PageNumberPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = ReturnRecipesCountSerializer(result_page,
+                                                  many=True,
+                                                  context={'request': request})
+
+        return paginator.get_paginated_response(serializer.data)
+
     @follow.mapping.delete
     def delete_favorite(self, request, id):
-        try:
-            FoodgramUser.objects.get(id=id)
-        except FoodgramUser.DoesNotExist:
+        if not FoodgramUser.objects.filter(id=id).exists():
             return Response({'detail': 'Пользователь не существует'},
                             status=status.HTTP_404_NOT_FOUND)
 
-        try:
-            follow = Follow.objects.get(user_follow_id=id, user=request.user)
-        except Follow.DoesNotExist:
+        follow = request.user.whofollow.filter(user_follow_id=id)
+        if not follow:
             return Response({'detail': 'Такой подписки нет'},
                             status=status.HTTP_400_BAD_REQUEST)
         follow.delete()

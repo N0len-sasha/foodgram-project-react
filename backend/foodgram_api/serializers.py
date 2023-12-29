@@ -228,15 +228,15 @@ class RecipeReturnSerializer(serializers.ModelSerializer):
 class FollowSerializer(serializers.Serializer):
 
     def create(self, validated_data):
-        user_follow_id = validated_data.pop('user_follow_id')
+        user_follow_id = validated_data.pop('user_follow')
         user_id = validated_data.pop('user')
         return Follow.objects.create(user_follow_id=user_follow_id,
                                      user_id=user_id)
 
     def validate(self, data):
-        user_follow_id = self.initial_data.get('user_follow_id')
+        user_follow_id = self.initial_data.get('user_follow')
         user_id = self.initial_data.get('user')
-        data['user_follow_id'] = user_follow_id
+        data['user_follow'] = user_follow_id
         data['user'] = user_id
         user = self.context['request'].user
 
@@ -282,15 +282,15 @@ class FollowSerializer(serializers.Serializer):
 class CheckListSerializer(serializers.Serializer):
 
     def create(self, validated_data):
-        recipe_id = validated_data.pop('recipe_id')
+        recipe_id = validated_data.pop('recipe')
         user_id = validated_data.pop('user')
         return CheckList.objects.create(recipe_id=recipe_id,
                                         user_id=user_id)
 
     def validate(self, data):
-        recipe_id = self.initial_data.get('recipe_id')
+        recipe_id = self.initial_data.get('recipe')
         user_id = self.initial_data.get('user')
-        data['recipe_id'] = recipe_id
+        data['recipe'] = recipe_id
         data['user'] = user_id
         user = self.context['request'].user
         if not user.is_authenticated:
@@ -318,15 +318,15 @@ class CheckListSerializer(serializers.Serializer):
 class FavoritesSerializer(serializers.Serializer):
 
     def create(self, validated_data):
-        recipe_id = validated_data.pop('recipe_id')
+        recipe_id = validated_data.pop('recipe')
         user_id = validated_data.pop('user')
         return Favorites.objects.create(recipe_id=recipe_id,
                                         user_id=user_id)
 
     def validate(self, data):
-        recipe_id = self.initial_data.get('recipe_id')
+        recipe_id = self.initial_data.get('recipe')
         user_id = self.initial_data.get('user')
-        data['recipe_id'] = recipe_id
+        data['recipe'] = recipe_id
         data['user'] = user_id
         user = self.context['request'].user
         if not user.is_authenticated:
@@ -354,7 +354,6 @@ class FavoritesSerializer(serializers.Serializer):
 class ReturnRecipesCountSerializer(UserSerializer):
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.ReadOnlyField(source='recipes.count')
-    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = FoodgramUser
@@ -374,13 +373,3 @@ class ReturnRecipesCountSerializer(UserSerializer):
                 recipes_limit = None
             recipes = recipes[:recipes_limit]
         return RecipeReturnSerializer(recipes, many=True).data
-
-    def get_is_subscribed(self, obj):
-        return (
-            'request' in self.context and (
-                self.context['request'].user.is_authenticated
-            ) and (
-                Follow.objects.filter(user=self.context['request'].user,
-                                      user_follow=obj).exists()
-            )
-        )

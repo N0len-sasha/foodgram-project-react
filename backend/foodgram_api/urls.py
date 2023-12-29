@@ -6,7 +6,6 @@ from .views import (
     IngredientViewSet,
     RecipeViewSet,
     CustomUserViewSet,
-    SubscriptionsViewSet,
 )
 
 s_router_v1 = SimpleRouter()
@@ -19,9 +18,6 @@ s_router_v1.register(r'ingredients',
 s_router_v1.register(r'recipes',
                      RecipeViewSet,
                      basename='recipes')
-s_router_v1.register(r'users/subscriptions',
-                     SubscriptionsViewSet,
-                     basename='subscriptions')
 s_router_v1.register(r'users',
                      CustomUserViewSet,
                      basename='users')
