@@ -169,7 +169,7 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         if len(ingredients_ids) != len(set(ingredients_ids)):
             raise serializers.ValidationError(
                 {'detail': 'Дубликаты ингредиентов не разрешены.'}
-                )
+            )
 
         if 'tags' not in data:
             raise serializers.ValidationError(
