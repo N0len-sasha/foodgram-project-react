@@ -147,7 +147,7 @@ class CustomUserViewSet(UserViewSet):
     queryset = FoodgramUser.objects.all()
     serializer_class = UserSerializer
     pagination_class = PageNumberPagination
-    permission_classes = [IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
         return FoodgramUser.objects.all()
