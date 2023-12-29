@@ -33,13 +33,11 @@ from .filters import CustomSearchFilter, RecipeFilter
 class TagViewSet(ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    pagination_class = None
 
 
 class IngredientViewSet(ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    pagination_class = None
     filter_backends = (CustomSearchFilter, )
     search_fields = ['^name', ]
 
@@ -179,7 +177,7 @@ class CustomUserViewSet(UserViewSet):
         return paginator.get_paginated_response(serializer.data)
 
     @follow.mapping.delete
-    def delete_favorite(self, request, id):
+    def delete_subscribtions(self, request, id):
         if not FoodgramUser.objects.filter(id=id).exists():
             return Response({'detail': 'Пользователь не существует'},
                             status=status.HTTP_404_NOT_FOUND)
