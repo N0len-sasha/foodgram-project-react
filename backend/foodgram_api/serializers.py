@@ -192,15 +192,11 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
-        instance.name = validated_data.get('name', instance.name)
-        instance.text = validated_data.get('text', instance.text)
-        instance.cooking_time = validated_data.get('cooking_time',
-                                                   instance.cooking_time)
-        tags_data = validated_data.get('tags')
+        tags_data = validated_data.pop('tags')
+        ingredients_data = validated_data.pop('ingredients')
 
-        instance.image = validated_data.get('image', instance.image)
+        instance = super().update(instance, validated_data)
 
-        ingredients_data = validated_data.get('ingredients')
         instance.tags.set(tags_data)
         instance.ingredients.clear()
         for ingredient_data in ingredients_data:
@@ -209,8 +205,6 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
             RecipeIngredient.objects.create(recipe=instance,
                                             ingredient=ingredient,
                                             amount=amount)
-        instance.save()
-
         return instance
 
     def to_representation(self, instance):
@@ -225,19 +219,14 @@ class RecipeReturnSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'image', 'cooking_time']
 
 
-class FollowSerializer(serializers.Serializer):
-
-    def create(self, validated_data):
-        user_follow_id = validated_data.pop('user_follow')
-        user_id = validated_data.pop('user')
-        return Follow.objects.create(user_follow_id=user_follow_id,
-                                     user_id=user_id)
+class FollowSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Follow
+        fields = ['user', 'user_follow']
 
     def validate(self, data):
-        user_follow_id = self.initial_data.get('user_follow')
-        user_id = self.initial_data.get('user')
-        data['user_follow'] = user_follow_id
-        data['user'] = user_id
+        user_follow_id = data.get('user_follow').id
+        user_id = data.get('user').id
         user = self.context['request'].user
 
         if not user.is_authenticated:
@@ -245,38 +234,32 @@ class FollowSerializer(serializers.Serializer):
                 {'detail': 'Требуется авторизация'}
             )
 
-        if int(user_follow_id) == user_id:
+        if user_follow_id == user_id:
             raise serializers.ValidationError(
                 {'detail': 'Нельзя подписаться на самого себя'}
             )
 
-        get_object_or_404(FoodgramUser, id=user_follow_id)
-
-        if Follow.objects.filter(user_id=user_id,
-                                 user_follow_id=user_follow_id).exists():
+        if user.whofollow.filter(user_follow_id=user_follow_id).exists():
             raise serializers.ValidationError(
-                {'detail':
-                 f'Рецепт c id {user_follow_id} уже есть в подписках'}
+                {'detail': ('Подписка на пользователя c id'
+                            f'{user_follow_id} уже существует')}
             )
+
         return data
 
     def to_representation(self, instance):
-        user_follow = FoodgramUser.objects.get(id=instance.user_follow_id)
-        user_data = UserSerializer(user_follow).data
-        recipes_limit = self.context['request'].query_params.get(
-            'recipes_limit'
+        recipes_limit = int(self.context['request'].query_params.get(
+            'recipes_limit', 0)
         )
-        recipes = Recipe.objects.filter(author=user_follow)
-        if recipes_limit:
-            recipes = recipes[:int(recipes_limit)]
-        user_recipes_data = RecipeReturnSerializer(
-            recipes, many=True,
-            context=self.context
-        ).data
-        user_data['recipes'] = user_recipes_data
-        user_data['recipes_count'] = recipes.count()
 
-        return user_data
+        return {
+            **UserSerializer(instance.user_follow).data,
+            'recipes': RecipeReturnSerializer(
+                instance.user_follow.recipes.all()[:recipes_limit],
+                many=True,
+                context=self.context).data,
+            'recipes_count': instance.user_follow.recipes.count(),
+        }
 
 
 class BaseRecipeActionSerializer(serializers.ModelSerializer):

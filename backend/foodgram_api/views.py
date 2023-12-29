@@ -150,6 +150,11 @@ class CustomUserViewSet(UserViewSet):
 
     @action(detail=True, methods=['post'], url_path='subscribe')
     def follow(self, request, id):
+
+        if not FoodgramUser.objects.filter(id=id).exists():
+            return Response({'detail': 'Пользователя не существует'},
+                            status=status.HTTP_404_NOT_FOUND)
+
         create_data = {
             'user': request.user.id,
             'user_follow': id
