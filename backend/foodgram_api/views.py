@@ -27,7 +27,7 @@ from .serializers import (TagSerializer,
                           CheckListSerializer)
 from .pagination import PageNumberPagination
 from .permissions import IsAuthorOrReadOnly
-from .filters import CustomSearchFilter, RecipeFilter
+from .filters import IngredientSearchFilter, RecipeFilter
 
 
 class TagViewSet(ReadOnlyModelViewSet):
@@ -38,7 +38,7 @@ class TagViewSet(ReadOnlyModelViewSet):
 class IngredientViewSet(ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    filter_backends = (CustomSearchFilter, )
+    filter_backends = (IngredientSearchFilter, )
     search_fields = ['^name', ]
 
 

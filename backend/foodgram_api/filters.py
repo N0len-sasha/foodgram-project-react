@@ -1,10 +1,11 @@
 from rest_framework.filters import SearchFilter
 from django_filters import rest_framework as filters
+from django.db.models import Q
 
 from .models import Recipe
 
 
-class CustomSearchFilter(SearchFilter):
+class IngredientSearchFilter(SearchFilter):
     def filter_queryset(self, request, queryset, view):
         name = request.query_params.get('name', '')
         return queryset.filter(name__startswith=name) if name else queryset
@@ -27,16 +28,10 @@ class RecipeFilter(filters.FilterSet):
 
     def filter_is_favorited(self, queryset, name, value):
         if value:
-            if value == '1' and self.request.user.is_authenticated:
-                return Recipe.objects.filter(
-                    id__in=self.request.user.favorites.values('recipe_id')
-                )
+            return queryset.filter(favorites__user=self.request.user.id)
         return queryset
 
     def filter_is_in_shopping_cart(self, queryset, name, value):
         if value:
-            if value == '1' and self.request.user.is_authenticated:
-                return Recipe.objects.filter(
-                    id__in=self.request.user.checklist.values('recipe_id')
-                )
+            return queryset.filter(checklist__user=self.request.user.id)
         return queryset
