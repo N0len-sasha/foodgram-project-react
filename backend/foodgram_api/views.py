@@ -69,9 +69,6 @@ class RecipeViewSet(ModelViewSet):
 
     @staticmethod
     def delete_object(model, pk, request):
-        if not Recipe.objects.filter(id=pk).exists():
-            return Response({'detail': 'Рецепт не существует'},
-                            status=status.HTTP_404_NOT_FOUND)
 
         obj = model.objects.filter(recipe_id=pk, user=request.user)
         if not obj.exists():
@@ -179,9 +176,6 @@ class FoodgramUserViewSet(UserViewSet):
 
     @follow.mapping.delete
     def delete_subscribtions(self, request, id):
-        if not FoodgramUser.objects.filter(id=id).exists():
-            return Response({'detail': 'Пользователь не существует'},
-                            status=status.HTTP_404_NOT_FOUND)
 
         follow = request.user.subscriber.filter(recipe_owner_id=id)
 
