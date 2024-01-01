@@ -154,8 +154,8 @@ class CustomUserViewSet(UserViewSet):
                             status=status.HTTP_404_NOT_FOUND)
 
         create_data = {
-            'user': request.user.id,
-            'user_follow': id
+            'subscriber': request.user.id,
+            'recipe_owner': id
         }
         context = {'request': request}
         serializer = FollowSerializer(data=create_data, context=context)
@@ -166,7 +166,7 @@ class CustomUserViewSet(UserViewSet):
     @action(detail=False, methods=['get'], url_path='subscriptions')
     def subscribtions(self, request):
         queryset = FoodgramUser.objects.filter(
-            whofollow__user=self.request.user
+            subscriber__subscriber=self.request.user
         )
         paginator = PageNumberPagination()
         result_page = paginator.paginate_queryset(queryset, request)
@@ -182,7 +182,7 @@ class CustomUserViewSet(UserViewSet):
             return Response({'detail': 'Пользователь не существует'},
                             status=status.HTTP_404_NOT_FOUND)
 
-        follow = request.user.whofollow.filter(user_follow_id=id)
+        follow = request.user.subscriber.filter(recipe_owner_id=id)
         if not follow:
             return Response({'detail': 'Такой подписки нет'},
                             status=status.HTTP_400_BAD_REQUEST)

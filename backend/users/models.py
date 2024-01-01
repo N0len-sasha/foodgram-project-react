@@ -43,16 +43,16 @@ class FoodgramUser(AbstractUser):
 
 
 class Follow(models.Model):
-    user_follow = models.ForeignKey(
+    recipe_owner = models.ForeignKey(
         FoodgramUser,
         on_delete=models.CASCADE,
-        related_name='usertofollow',
+        related_name='recipeauthor',
         verbose_name='Подписан на'
     )
-    user = models.ForeignKey(
+    subscriber = models.ForeignKey(
         FoodgramUser,
         on_delete=models.CASCADE,
-        related_name='whofollow',
+        related_name='subscriber',
         verbose_name='Пользователь'
     )
 
@@ -61,15 +61,15 @@ class Follow(models.Model):
         verbose_name_plural = 'Подписки'
         constraints = [
             models.UniqueConstraint(
-                fields=('user', 'user_follow'),
+                fields=('subscriber', 'recipe_owner'),
                 name='no_self_subscriptions'
             ),
             models.CheckConstraint(
                 name='unique_subscriptions',
-                check=~models.Q(user=models.F('user_follow')),
+                check=~models.Q(subscriber=models.F('recipe_owner')),
             ),
         ]
 
     def __str__(self):
-        return (f'Пользователь {self.user.username}'
-                f'подписан на {self.user_follow.username}')
+        return (f'Пользователь {self.subscriber.username}'
+                f'подписан на {self.recipe_owner.username}')

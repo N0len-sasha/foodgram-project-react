@@ -23,7 +23,7 @@ class UserSerializer(serializers.ModelSerializer):
                 (
                     request.user.is_authenticated
                 ) and (
-                    request.user.whofollow.filter(user_follow=obj).exists()
+                    request.user.subscriber.filter(recipe_owner=obj).exists()
                 )
             )
         return False
@@ -221,11 +221,11 @@ class RecipeReturnSerializer(serializers.ModelSerializer):
 class FollowSerializer(serializers.ModelSerializer):
     class Meta:
         model = Follow
-        fields = ['user', 'user_follow']
+        fields = ['subscriber', 'recipe_owner']
 
     def validate(self, data):
-        user_follow_id = data.get('user_follow').id
-        user_id = data.get('user').id
+        recipe_owner_id = data.get('recipe_owner').id
+        subscriber_id = data.get('subscriber').id
         user = self.context['request'].user
 
         if not user.is_authenticated:
@@ -233,15 +233,15 @@ class FollowSerializer(serializers.ModelSerializer):
                 {'detail': 'Требуется авторизация'}
             )
 
-        if user_follow_id == user_id:
+        if recipe_owner_id == subscriber_id:
             raise serializers.ValidationError(
                 {'detail': 'Нельзя подписаться на самого себя'}
             )
 
-        if user.whofollow.filter(user_follow_id=user_follow_id).exists():
+        if user.subscriber.filter(recipe_owner_id=recipe_owner_id).exists():
             raise serializers.ValidationError(
                 {'detail': ('Подписка на пользователя c id'
-                            f'{user_follow_id} уже существует')}
+                            f'{recipe_owner_id} уже существует')}
             )
 
         return data
@@ -252,12 +252,12 @@ class FollowSerializer(serializers.ModelSerializer):
         )
 
         return {
-            **UserSerializer(instance.user_follow).data,
+            **UserSerializer(instance.recipe_owner).data,
             'recipes': RecipeReturnSerializer(
-                instance.user_follow.recipes.all()[:recipes_limit],
+                instance.recipe_owner.recipes.all()[:recipes_limit],
                 many=True,
                 context=self.context).data,
-            'recipes_count': instance.user_follow.recipes.count(),
+            'recipes_count': instance.recipe_owner.recipes.count(),
         }
 
 
