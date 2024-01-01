@@ -29,9 +29,9 @@ class Recipe(admin.ModelAdmin):
 
     list_filter = ('author', 'name', 'tags')
 
-    inlines = [
+    inlines = (
         IngredientItemTabular,
-    ]
+    )
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(
@@ -51,9 +51,9 @@ class Recipe(admin.ModelAdmin):
 
 @admin.register(CheckList)
 class CheckList(admin.ModelAdmin):
-    list_display = ['recipe', 'user']
+    list_display = ('recipe', 'user')
 
 
 @admin.register(Favorites)
 class Favorites(admin.ModelAdmin):
-    list_display = ['recipe', 'user']
+    list_display = ('recipe', 'user')
