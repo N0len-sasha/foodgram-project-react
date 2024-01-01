@@ -209,13 +209,13 @@ class RecipeReturnSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = ['id', 'name', 'image', 'cooking_time']
+        fields = ('id', 'name', 'image', 'cooking_time')
 
 
 class FollowSerializer(serializers.ModelSerializer):
     class Meta:
         model = Follow
-        fields = ['subscriber', 'recipe_owner']
+        fields = ('subscriber', 'recipe_owner')
 
     def validate(self, data):
         recipe_owner = data.get('recipe_owner')
@@ -244,7 +244,7 @@ class FollowSerializer(serializers.ModelSerializer):
 class BaseRecipeActionSerializer(serializers.ModelSerializer):
     class Meta:
         model = None
-        fields = ['recipe', 'user']
+        fields = ('recipe', 'user')
 
     def validate(self, data):
         user = data.get('user')

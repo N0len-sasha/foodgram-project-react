@@ -20,7 +20,7 @@ class CustomUser(BaseUserAdmin):
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(
             recipes_count=Count('recipes'),
-            followers_count=Count('follows'),
+            followers_count=Count('recipeauthor'),
         )
 
     @admin.display(description='Подписчики')
