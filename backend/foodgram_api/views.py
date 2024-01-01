@@ -1,6 +1,3 @@
-import csv
-import tempfile
-
 from djoser.views import UserViewSet
 from django.http import FileResponse
 from django.db.models import Sum

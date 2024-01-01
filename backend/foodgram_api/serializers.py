@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from drf_extra_fields.fields import Base64ImageField as DRF_Base64ImageField
-from rest_framework import status
 
 from .models import (Tag, Ingredient, Favorites,
                      Recipe, CheckList, RecipeIngredient)
