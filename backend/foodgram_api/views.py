@@ -83,15 +83,15 @@ class RecipeViewSet(ModelViewSet):
 
     @staticmethod
     def write_txt_data(ingredients):
-        data = 'Ингредиент,Количество,Мера '
+        data = ''
 
         for ingredient in ingredients:
             row = (
-                f"{ingredient['ingredient__name']},"
-                f"{ingredient['total_amount']},"
-                f"{ingredient['ingredient__measurement_unit']} "
+                f"{ingredient['ingredient__name']}, "
+                f"{ingredient['total_amount']}, "
+                f"{ingredient['ingredient__measurement_unit']}"
             )
-            data += row
+            data += (row + ' || ')
 
         return data
 
@@ -127,6 +127,7 @@ class RecipeViewSet(ModelViewSet):
 
         return FileResponse(data,
                             as_attachment=True,
+                            content_type='text/plain',
                             filename='Ingredients.txt')
 
 
