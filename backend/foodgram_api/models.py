@@ -126,7 +126,7 @@ class RecipeIngredient(models.Model):
         related_name='recipeingredient',
         verbose_name='Ингредиент'
     )
-    amount = models.SmallIntegerField(
+    amount = models.PositiveSmallIntegerField(
         validators=[
             MinValueValidator(MIN_INGREDIENT_VALUE,
                               message=INGREDIENT_VALIDATION_MESSAGE),
@@ -153,7 +153,12 @@ class RecipeUserModel(models.Model):
 
     class Meta:
         abstract = True
-        unique_together = ['user', 'recipe']
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'recipe'),
+                name='user_recipe_unique'
+            ),
+        ]
 
 
 class CheckList(RecipeUserModel):
@@ -163,7 +168,8 @@ class CheckList(RecipeUserModel):
         verbose_name_plural = 'Чеклисты'
 
     def __str__(self):
-        return f'Чеклист {self.pk}'
+        return (f'Рецепт {self.recipe.name} добавлен в'
+                f'покупки пользователя {self.user.username}')
 
 
 class Favorites(RecipeUserModel):
@@ -173,4 +179,5 @@ class Favorites(RecipeUserModel):
         verbose_name_plural = 'Избранное'
 
     def __str__(self):
-        return f'Избранное {self.pk}'
+        return (f'Рецепт {self.recipe.name} добавлен в'
+                f'избранное пользователя {self.user.username}')
