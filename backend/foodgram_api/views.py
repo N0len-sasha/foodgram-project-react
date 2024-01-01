@@ -12,7 +12,6 @@ from rest_framework.response import Response
 from rest_framework import status, permissions
 from rest_framework.decorators import action
 
-
 from .models import (Tag, Ingredient, Recipe,
                      CheckList, Favorites, RecipeIngredient)
 from users.models import FoodgramUser
@@ -46,8 +45,8 @@ class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.select_related('author').prefetch_related(
         'tags', 'ingredients').all()
     pagination_class = PageNumberPagination
-    permission_classes = [IsAuthorOrReadOnly]
-    filter_backends = [DjangoFilterBackend]
+    permission_classes = (IsAuthorOrReadOnly,)
+    filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     http_method_names = ('get', 'post', 'patch', 'delete')
 
@@ -83,19 +82,21 @@ class RecipeViewSet(ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @staticmethod
-    def write_csv_data(ingredients, file_path):
-        with open(file_path, 'w', newline='', encoding='utf-8') as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow(['Ингредиент', 'Количество', 'Мера'])
+    def write_txt_data(ingredients):
+        data = 'Ингредиент,Количество,Мера '
 
-            for ingredient in ingredients:
-                writer.writerow([
-                    ingredient['ingredient__name'],
-                    ingredient['total_amount'],
-                    ingredient['ingredient__measurement_unit']
-                ])
+        for ingredient in ingredients:
+            row = (
+                f"{ingredient['ingredient__name']},"
+                f"{ingredient['total_amount']},"
+                f"{ingredient['ingredient__measurement_unit']} "
+            )
+            data += row
 
-    @action(detail=True, methods=['post'], url_path='favorite')
+        return data
+
+    @action(detail=True, methods=['post'],
+            url_path='favorite', permission_classes=(IsAuthenticated,))
     def favorite(self, request, pk):
         return self.create_object(FavoritesSerializer, pk, request)
 
@@ -103,7 +104,8 @@ class RecipeViewSet(ModelViewSet):
     def delete_favorite(self, request, pk):
         return self.delete_object(Favorites, pk, request)
 
-    @action(detail=True, methods=['post'], url_path='shopping_cart')
+    @action(detail=True, methods=['post'],
+            url_path='shopping_cart', permission_classes=(IsAuthenticated,))
     def shopping_cart(self, request, pk):
         return self.create_object(CheckListSerializer, pk, request)
 
@@ -121,21 +123,17 @@ class RecipeViewSet(ModelViewSet):
             total_amount=Sum('amount')
         ).order_by('ingredient__name')
 
-        temp_file = tempfile.NamedTemporaryFile(delete=False)
-        self.write_csv_data(ingredients, temp_file.name)
+        data = self.write_txt_data(ingredients)
 
-        response = FileResponse(open(temp_file.name, 'rb'),
-                                as_attachment=True,
-                                filename='Ingredients.csv')
-        temp_file.close()
-
-        return response
+        return FileResponse(data,
+                            as_attachment=True,
+                            filename='Ingredients.txt')
 
 
 '''Пользователи'''
 
 
-class CustomUserViewSet(UserViewSet):
+class FoodgramUserViewSet(UserViewSet):
     queryset = FoodgramUser.objects.all()
     serializer_class = UserSerializer
     pagination_class = PageNumberPagination
@@ -146,7 +144,8 @@ class CustomUserViewSet(UserViewSet):
             return [IsAuthenticated()]
         return super().get_permissions()
 
-    @action(detail=True, methods=['post'], url_path='subscribe')
+    @action(detail=True, methods=['post'],
+            url_path='subscribe', permission_classes=(IsAuthenticated,))
     def follow(self, request, id):
 
         if not FoodgramUser.objects.filter(id=id).exists():
@@ -163,7 +162,8 @@ class CustomUserViewSet(UserViewSet):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    @action(detail=False, methods=['get'], url_path='subscriptions')
+    @action(detail=False, methods=['get'],
+            url_path='subscriptions', permission_classes=(IsAuthenticated,))
     def subscribtions(self, request):
         queryset = FoodgramUser.objects.filter(
             subscriber__subscriber=self.request.user
@@ -183,7 +183,8 @@ class CustomUserViewSet(UserViewSet):
                             status=status.HTTP_404_NOT_FOUND)
 
         follow = request.user.subscriber.filter(recipe_owner_id=id)
-        if not follow:
+
+        if not follow.exists():
             return Response({'detail': 'Такой подписки нет'},
                             status=status.HTTP_400_BAD_REQUEST)
         follow.delete()

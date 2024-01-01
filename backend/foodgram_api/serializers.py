@@ -274,6 +274,7 @@ class FavoritesSerializer(BaseRecipeActionSerializer):
         model = Favorites
         fields = ['recipe', 'user']
 
+
 class ReturnRecipesCountSerializer(UserSerializer):
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.ReadOnlyField(source='recipes.count')

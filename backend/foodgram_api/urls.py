@@ -5,7 +5,7 @@ from .views import (
     TagViewSet,
     IngredientViewSet,
     RecipeViewSet,
-    CustomUserViewSet,
+    FoodgramUserViewSet,
 )
 
 s_router_v1 = SimpleRouter()
@@ -19,7 +19,7 @@ s_router_v1.register(r'recipes',
                      RecipeViewSet,
                      basename='recipes')
 s_router_v1.register(r'users',
-                     CustomUserViewSet,
+                     FoodgramUserViewSet,
                      basename='users')
 
 urlpatterns = [
