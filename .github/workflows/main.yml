@@ -74,8 +74,8 @@ jobs:
     - name: Install dependencies
       run: |
         cd frontend/
-        npm install react-meta-tags@latest_version
-        npm install --force
+        rm -rf node_modules package-lock.json
+        npm install react-meta-tags
         npm ci
 
 
