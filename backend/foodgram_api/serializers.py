@@ -17,15 +17,13 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
-        if request:
-            return (
-                (
-                    request.user.is_authenticated
-                ) and (
-                    request.user.subscriber.filter(recipe_owner=obj).exists()
-                )
+        return request and (
+            (
+                request.user.is_authenticated
+            ) and (
+                request.user.subscriber.filter(recipe_owner=obj).exists()
             )
-        return False
+        )
 
 
 class Base64ImageField(DRF_Base64ImageField):
@@ -220,7 +218,7 @@ class FollowSerializer(serializers.ModelSerializer):
         recipe_owner = data.get('recipe_owner')
         subscriber = data.get('subscriber')
 
-        if recipe_owner.id == subscriber.id:
+        if recipe_owner == subscriber:
             raise serializers.ValidationError(
                 {'detail': 'Нельзя подписаться на самого себя'}
             )
@@ -236,7 +234,7 @@ class FollowSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         return ReturnRecipesCountSerializer(
             instance.recipe_owner,
-            context={'request': self.context['request']}
+            context=self.context
         ).data
 
 
@@ -258,20 +256,19 @@ class BaseRecipeActionSerializer(serializers.ModelSerializer):
         return data
 
     def to_representation(self, instance):
-        return RecipeReturnSerializer(
-            Recipe.objects.get(id=instance.recipe_id)).data
+        return RecipeReturnSerializer(instance.recipe).data
 
 
 class CheckListSerializer(BaseRecipeActionSerializer):
     class Meta(BaseRecipeActionSerializer.Meta):
         model = CheckList
-        fields = ['recipe', 'user']
+        fields = ('recipe', 'user')
 
 
 class FavoritesSerializer(BaseRecipeActionSerializer):
     class Meta(BaseRecipeActionSerializer.Meta):
         model = Favorites
-        fields = ['recipe', 'user']
+        fields = ('recipe', 'user')
 
 
 class ReturnRecipesCountSerializer(UserSerializer):

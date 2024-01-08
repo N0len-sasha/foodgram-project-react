@@ -156,14 +156,14 @@ class RecipeUserModel(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=('user', 'recipe'),
-                name='user_recipe_unique'
+                name='%(class)s_user_recipe_unique'
             ),
         ]
 
 
 class CheckList(RecipeUserModel):
 
-    class Meta:
+    class Meta(RecipeUserModel.Meta):
         verbose_name = 'Чеклист'
         verbose_name_plural = 'Чеклисты'
 
@@ -174,7 +174,7 @@ class CheckList(RecipeUserModel):
 
 class Favorites(RecipeUserModel):
 
-    class Meta:
+    class Meta(RecipeUserModel.Meta):
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранное'
 

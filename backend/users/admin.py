@@ -15,7 +15,7 @@ class CustomUser(BaseUserAdmin):
     list_display = ('username', 'email', 'first_name',
                     'last_name', 'get_followers', 'get_recipes')
 
-    list_filter = ['email', 'username']
+    list_filter = ('email', 'username')
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(

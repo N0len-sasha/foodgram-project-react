@@ -35,7 +35,7 @@ class IngredientViewSet(ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     filter_backends = (IngredientSearchFilter, )
-    search_fields = ['^name', ]
+    search_fields = ('^name', )
 
 
 class RecipeViewSet(ModelViewSet):
@@ -81,9 +81,9 @@ class RecipeViewSet(ModelViewSet):
 
         for ingredient in ingredients:
             row = (
-                f"{ingredient['ingredient__name']}, "
-                f"{ingredient['total_amount']}, "
-                f"{ingredient['ingredient__measurement_unit']}"
+                f'{ingredient["ingredient__name"]}, '
+                f'{ingredient["total_amount"]}, '
+                f'{ingredient["ingredient__measurement_unit"]}'
             )
             data += (row + ' || ')
 
@@ -123,9 +123,6 @@ class RecipeViewSet(ModelViewSet):
                             as_attachment=True,
                             content_type='text/plain',
                             filename='Ingredients.txt')
-
-
-'''Пользователи'''
 
 
 class FoodgramUserViewSet(UserViewSet):

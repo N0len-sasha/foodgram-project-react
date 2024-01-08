@@ -36,7 +36,7 @@ class FoodgramUser(AbstractUser):
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
-        ordering = ['first_name', 'last_name']
+        ordering = ('first_name', 'last_name')
 
     def __str__(self):
         return self.username
@@ -59,7 +59,7 @@ class Follow(models.Model):
     class Meta:
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
-        constraints = [
+        constraints = (
             models.UniqueConstraint(
                 fields=('subscriber', 'recipe_owner'),
                 name='no_self_subscriptions'
@@ -68,7 +68,7 @@ class Follow(models.Model):
                 name='unique_subscriptions',
                 check=~models.Q(subscriber=models.F('recipe_owner')),
             ),
-        ]
+        )
 
     def __str__(self):
         return (f'Пользователь {self.subscriber.username}'
