@@ -137,17 +137,6 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         ]
         RecipeIngredient.objects.bulk_create(recipe_ingredients)
 
-    def validate_tags(self, value):
-        if not value:
-            raise serializers.ValidationError(
-                {'tags': 'Список тегов не может быть пустым.'}
-            )
-        if len(value) != len(set(value)):
-            raise serializers.ValidationError(
-                {'tags': 'Теги должны быть уникальными.'}
-            )
-        return value
-
     def validate_image(self, value):
         if not value:
             raise serializers.ValidationError(
@@ -157,6 +146,17 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         ingredients = data.get('ingredients', [])
+        tags = data.get('tags', [])
+
+        if not tags:
+            raise serializers.ValidationError(
+                {'tags': 'Список тегов не может быть пустым.'}
+            )
+
+        if len(tags) != len(set(tags)):
+            raise serializers.ValidationError(
+                {'tags': 'Теги должны быть уникальными.'}
+            )
 
         if not ingredients:
             raise serializers.ValidationError(
@@ -185,13 +185,7 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
-        tags_data = validated_data.pop('tags', None)
         ingredients_data = validated_data.pop('ingredients')
-
-        if not tags_data:
-            raise serializers.ValidationError(
-                {'tags': 'Поле tags обязательно для обновления рецепта.'}
-            )
 
         instance.ingredients.clear()
         self.create_ingredients(instance, ingredients_data)
