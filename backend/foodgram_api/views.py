@@ -158,7 +158,7 @@ class FoodgramUserViewSet(UserViewSet):
             url_path='subscriptions', permission_classes=(IsAuthenticated,))
     def subscribtions(self, request):
         queryset = FoodgramUser.objects.filter(
-            recipe_owner__subscriber=self.request.user
+            recipeauthor__subscriber=self.request.user
         )
         paginator = PageNumberPagination()
         result_page = paginator.paginate_queryset(queryset, request)
