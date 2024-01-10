@@ -1,3 +1,5 @@
+# Статуworkflow
+[![Main Foodgram workflow](https://github.com/N0len-sasha/foodgram-project-react/actions/workflows/main.yml/badge.svg)](https://github.com/N0len-sasha/foodgram-project-react/actions/workflows/main.yml)
 
 # Описание 
 Проект Foodgram представляет собой портал для публикации и обмена различными рецептами. 
